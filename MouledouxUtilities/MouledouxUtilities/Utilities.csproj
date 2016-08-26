@@ -32,7 +32,12 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="FiniteStateMachine\FiniteStateMachine.cs" />
+    <Compile Include="MessengerSystem\Messenger.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+  </ItemGroup>
+  <ItemGroup />
+  <ItemGroup>
+    <Reference Include="System" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

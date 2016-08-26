@@ -1,4 +1,4 @@
-﻿namespace Mouledoux.Utilities.FSM
+﻿namespace Mouledoux.Components
 {
     /// <summary>
     /// Interface for the Finite STate Machine
@@ -18,6 +18,7 @@
         /// <param name="aState">State to be added to the list of possible states</param>
         /// <returns>Returns 1 if state was added to the list, and 0 if it already exists</returns>
         int AddState(I aState);
+
         /// <summary>
         /// Removes a state from the list of possible states and all transistions involving the state
         /// </summary>
@@ -33,6 +34,7 @@
         /// <param name="aHandler">Delegate to be invoked on successful transition</param>
         /// <returns>Returns 1 if the transition was successfuly added to the list, 0 if it already exists, and -1 if the states are invalid</returns>
         int AddTransition(I aState, I bState, System.Delegate aHandler);
+
         /// <summary>
         /// Removes a transition of 2 states from the list of valid transitions
         /// </summary>
