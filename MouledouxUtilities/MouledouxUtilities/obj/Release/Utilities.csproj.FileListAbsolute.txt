@@ -1,0 +1,5 @@
+c:\users\ericm\documents\visual studio 2015\Projects\MouledouxUtilities\MouledouxUtilities\bin\Release\Mouledoux.dll
+c:\users\ericm\documents\visual studio 2015\Projects\MouledouxUtilities\MouledouxUtilities\bin\Release\Mouledoux.pdb
+c:\users\ericm\documents\visual studio 2015\Projects\MouledouxUtilities\MouledouxUtilities\obj\Release\Mouledoux.dll
+c:\users\ericm\documents\visual studio 2015\Projects\MouledouxUtilities\MouledouxUtilities\obj\Release\Mouledoux.pdb
+c:\users\ericm\documents\visual studio 2015\Projects\MouledouxUtilities\MouledouxUtilities\obj\Release\Utilities.csprojResolveAssemblyReference.cache
