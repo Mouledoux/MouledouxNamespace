@@ -24,8 +24,40 @@
         }
         #endregion
 
+        /// <summary>
+        /// Adds a Callback to a list of Callbacks to be executed on the broadcast of aMessage
+        /// </summary>
+        /// 
+        /// <param name="aMessage">Message to listen for</param>
+        /// <param name="aCallback">Callback to execute on message broadcast</param>
+        /// 
+        /// <returns>
+        /// Returns 1 if the message and Callback were correctly added,
+        /// and 0 if the message was already subscribed to, but the Callback was still added
+        /// </returns>
+        private int AddSubscriber(string aMessage, Callback aCallback)
+        {
+            if(Subsciptions.ContainsKey(aMessage))
+            {
+                Subsciptions[aMessage] += aCallback;
+                return 0;
+            }
+            else
+            {
+                Subsciptions.Add(aMessage, aCallback);
+                return 1;
+            }
+        }
+
+        private int RemoveSubscriber(string aMessage, Callback[] aCallbacks)
+        {
+            return 1;
+        }
+
+
         private System.Collections.Generic.Dictionary<string, Callback> Subsciptions =
             new System.Collections.Generic.Dictionary<string, Callback>();
+
 
         #region Subclasses
         public class Publisher
