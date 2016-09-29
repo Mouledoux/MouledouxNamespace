@@ -71,7 +71,16 @@
             return 1;
         }
 
-
+        /// <summary>
+        /// Broadcast a message to the list of subscriptions
+        /// </summary>
+        /// 
+        /// <param name="aMessage">Message to broadcast</param>
+        /// 
+        /// <returns>
+        /// Returns 1 if the broadcast was successful,
+        /// and 0 if the message was never subscribed to
+        /// </returns>
         private int BroadcastMessage(string aMessage)
         {
             if (!Subsciptions.ContainsKey(aMessage))
