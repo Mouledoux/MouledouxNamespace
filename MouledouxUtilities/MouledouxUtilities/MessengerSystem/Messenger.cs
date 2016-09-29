@@ -72,6 +72,16 @@
         }
 
 
+        private int BroadcastMessage(string aMessage)
+        {
+            if (!Subsciptions.ContainsKey(aMessage))
+                return 0;
+
+            Subsciptions[aMessage].Invoke();
+            return 1;
+        }
+
+
         private System.Collections.Generic.Dictionary<string, Callback> Subsciptions =
             new System.Collections.Generic.Dictionary<string, Callback>();
 
@@ -81,7 +91,7 @@
         {
             public int Publish(string aMessage)
             {
-                return 1;
+                return Instance.BroadcastMessage(aMessage);
             }
         }
 
