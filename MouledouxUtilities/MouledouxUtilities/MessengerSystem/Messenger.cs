@@ -89,7 +89,12 @@
         {
             public int Subscribe(string aMessage, Callback aCallback)
             {
-                return 1;
+                return Instance.AddSubscriber(aMessage, aCallback);
+            }
+
+            public int Unsubscribe(string aMessage, Callback aCallback)
+            {
+                return Instance.RemoveSubscriber(aMessage, aCallback);
             }
         }
         #endregion
