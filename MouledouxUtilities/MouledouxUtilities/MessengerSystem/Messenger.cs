@@ -24,6 +24,7 @@
         }
         #endregion
 
+
         /// <summary>
         /// Adds a Callback to a list of Callbacks to be executed on the broadcast of aMessage
         /// </summary>
@@ -49,12 +50,24 @@
             }
         }
 
+
+        /// <summary>
+        /// Removes a Callback from a subscribed message, while leaving the message in the list of subscriptions
+        /// </summary>
+        /// 
+        /// <param name="aMessage">Message to unsubscribe from</param>
+        /// <param name="aCallback">Callback to remove from subscription</param>
+        /// 
+        /// <returns>
+        /// Returns 1 if the Callback was removed,
+        /// and 0 if the message was not subscribed to
+        /// </returns>
         private int RemoveSubscriber(string aMessage, Callback aCallback)
         {
             if (!Subsciptions.ContainsKey(aMessage))
                 return 0;
 
-            Subsciptions.Add(aMessage, aCallback);
+            Subsciptions[aMessage] -= aCallback;
             return 1;
         }
 
