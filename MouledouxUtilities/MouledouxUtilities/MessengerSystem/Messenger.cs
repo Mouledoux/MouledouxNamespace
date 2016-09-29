@@ -126,11 +126,11 @@
         public class Subscriber
         {
             /// <summary>
-            /// 
+            /// Adds a Callback to a list of Callbacks to be executed on the broadcast of aMessage
             /// </summary>
             /// 
-            /// <param name="aMessage"></param>
-            /// <param name="aCallback"></param>
+            /// <param name="aMessage">Message to listen for</param>
+            /// <param name="aCallback">Callback to execute on message broadcast</param>
             /// 
             /// <returns>
             /// Returns the result of Messenger.AddSubscriber
@@ -142,11 +142,11 @@
 
 
             /// <summary>
-            /// 
+            /// Removes a Callback from a subscribed message, while leaving the message in the list of subscriptions
             /// </summary>
             /// 
-            /// <param name="aMessage"></param>
-            /// <param name="aCallback"></param>
+            /// <param name="aMessage">Message to unsubscribe from</param>
+            /// <param name="aCallback">Callback to remove from subscription</param>
             /// 
             /// <returns>
             /// Returns the result of Messenger.RemoveSubscriber
