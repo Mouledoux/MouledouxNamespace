@@ -57,7 +57,7 @@
         /// <returns>
         /// Returns 1 if the state(and transistions) was removed from the list(s),
         /// 0 if the state did not exist,
-        /// and -1 if the object is already in that state
+        /// and -1 if the object is currently in that state
         /// </returns>
         public int RemoveState(T aState)
         {
