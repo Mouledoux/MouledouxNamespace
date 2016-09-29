@@ -71,6 +71,7 @@
             return 1;
         }
 
+
         /// <summary>
         /// Broadcast a message to the list of subscriptions
         /// </summary>
@@ -90,27 +91,66 @@
             return 1;
         }
 
-
+        
+        /// <summary>
+        /// Dictionary of messages subscribed to, and Callbacks to run on message broadcast
+        /// </summary>
         private System.Collections.Generic.Dictionary<string, Callback> Subsciptions =
             new System.Collections.Generic.Dictionary<string, Callback>();
 
 
         #region Subclasses
+        /// <summary>
+        /// Objects that inherit from this class can globally broadcast messages to subscribers
+        /// </summary>
         public class Publisher
         {
-            public int Publish(string aMessage)
+            /// <summary>
+            /// Broadcast a message for the Messenger class to 
+            /// </summary>
+            /// 
+            /// <param name="aMessage">Message to broadcast</param>
+            /// 
+            /// <returns>
+            /// Returns the result of Messenger.BroadcastMessage
+            /// </returns>
+            public int Broadcast(string aMessage)
             {
                 return Instance.BroadcastMessage(aMessage);
             }
         }
 
+        /// <summary>
+        /// Objects that inherit from this class can subscribe to globally broadcasted messages
+        /// </summary>
         public class Subscriber
         {
+            /// <summary>
+            /// 
+            /// </summary>
+            /// 
+            /// <param name="aMessage"></param>
+            /// <param name="aCallback"></param>
+            /// 
+            /// <returns>
+            /// Returns the result of Messenger.AddSubscriber
+            /// </returns>
             public int Subscribe(string aMessage, Callback aCallback)
             {
                 return Instance.AddSubscriber(aMessage, aCallback);
             }
 
+
+            /// <summary>
+            /// 
+            /// </summary>
+            /// 
+            /// <param name="aMessage"></param>
+            /// <param name="aCallback"></param>
+            /// 
+            /// <returns>
+            /// Returns the result of Messenger.RemoveSubscriber
+            /// </returns>
             public int Unsubscribe(string aMessage, Callback aCallback)
             {
                 return Instance.RemoveSubscriber(aMessage, aCallback);
