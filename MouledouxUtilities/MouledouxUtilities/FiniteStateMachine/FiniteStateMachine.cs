@@ -36,7 +36,7 @@
         /// <returns>
         /// Returns 1 if state was added to the list,
         /// and 0 if it already exist
-        /// s</returns>
+        /// </returns>
         public int AddState(T aState)
         {
             if (m_states.Contains(aState))
@@ -147,7 +147,8 @@
         /// <param name="bState">State the object would be transistioning to</param>
         /// 
         /// <returns>Returns TRUE if the transistion is valid,
-        /// and FALSE if the transistion is not valid</returns>
+        /// and FALSE if the transistion is not valid
+        /// </returns>
         public bool CheckTransition(T aState, T bState)
         {
             string transistionKey = aState.ToString() + "->" + bState.ToString();

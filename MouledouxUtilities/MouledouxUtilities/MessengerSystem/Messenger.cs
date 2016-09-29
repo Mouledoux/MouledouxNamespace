@@ -49,8 +49,12 @@
             }
         }
 
-        private int RemoveSubscriber(string aMessage, Callback[] aCallbacks)
+        private int RemoveSubscriber(string aMessage, Callback aCallback)
         {
+            if (!Subsciptions.ContainsKey(aMessage))
+                return 0;
+
+            Subsciptions.Add(aMessage, aCallback);
             return 1;
         }
 
