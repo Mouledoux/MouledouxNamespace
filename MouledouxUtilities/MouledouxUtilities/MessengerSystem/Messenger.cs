@@ -1,42 +1,48 @@
 ﻿namespace Mouledoux.Interaction
 {
+    /// <summary>
+    /// Delegate type required to be used by the Publisher/Subscriber
+    /// </summary>
+    public delegate void Callback();
 
-    internal interface IPublisher
+    public sealed class Messenger
     {
-    }
+        #region Singleton
+        private static Messenger m_instance = null;
 
+        private Messenger() { }
 
-
-    internal interface ISubscriber
-    {
-    }
-
-
-
-    internal static class Messenger
-    {
-        public static int SubscribeTo(string aMessage)
+        public static Messenger Instance
         {
+            get
+            {
+                if (m_instance == null)
+                    m_instance = new Messenger();
 
-            return 1;
+                return m_instance;
+            }
+        }
+        #endregion
+
+        private System.Collections.Generic.Dictionary<string, Callback> Subsciptions =
+            new System.Collections.Generic.Dictionary<string, Callback>();
+
+        #region Subclasses
+        public class Publisher
+        {
+            public int Publish(string aMessage)
+            {
+                return 1;
+            }
         }
 
-        public static int BroadcastMessage(string aMessage)
+        public class Subscriber
         {
-            return 1;
+            public int Subscribe(string aMessage, Callback aCallback)
+            {
+                return 1;
+            }
         }
-
-        //private static System.Collections.Generic.Dictionary<string, System.Action<int> m_messages =
-        //            new System.Collections.Generic.Dictionary<string, System.Action();
-    }
-
-
-
-    public class Publisher : IPublisher
-    {
-    }
-
-    public class Subscriber : ISubscriber
-    {
+        #endregion
     }
 }
