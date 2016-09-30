@@ -33,21 +33,56 @@
         /// <param name="aCallback">Callback to execute on message broadcast</param>
         /// 
         /// <returns>
-        /// Returns 1 if the message and Callback were correctly added,
-        /// and 0 if the message was already subscribed to, but the Callback was still added
+        /// Returns 1 if the message and Callback were correctly added
         /// </returns>
         private int AddSubscriber(string aMessage, Callback aCallback)
         {
-            if(Subsciptions.ContainsKey(aMessage))
+            if(Instance.Subsciptions.ContainsKey(aMessage))
+                return 0;
+
+            Instance.Subsciptions.Add(aMessage, aCallback);
+            return 1;
+        }
+
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// 
+        /// <param name="aMessage"></param>
+        /// <param name="aCallback"></param>
+        /// 
+        /// <returns>
+        /// </returns>
+        private int UpdateSubscriber(string aMessage, Callback aCallback)
+        {
+            if (!Instance.Subsciptions.ContainsKey(aMessage))
+                return 0;
+
+            Instance.Subsciptions[aMessage] += aCallback;
+            return 1;
+        }
+
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// 
+        /// <param name="aMessage"></param>
+        /// <param name="aCallback"></param>
+        /// 
+        /// <returns>
+        /// </returns>
+        private int Resubscribe(string aMessage, Callback aCallback)
+        {
+            if (!Instance.Subsciptions.ContainsKey(aMessage))
             {
-                Subsciptions[aMessage] += aCallback;
+                Instance.AddSubscriber(aMessage, aCallback);
                 return 0;
             }
-            else
-            {
-                Subsciptions.Add(aMessage, aCallback);
-                return 1;
-            }
+
+            Instance.Subsciptions[aMessage] = aCallback;
+            return 1;
         }
 
 
@@ -64,10 +99,10 @@
         /// </returns>
         private int RemoveSubscriber(string aMessage, Callback aCallback)
         {
-            if (!Subsciptions.ContainsKey(aMessage))
+            if (!Instance.Subsciptions.ContainsKey(aMessage))
                 return 0;
 
-            Subsciptions[aMessage] -= aCallback;
+            Instance.Subsciptions[aMessage] -= aCallback;
             return 1;
         }
 
@@ -84,10 +119,10 @@
         /// </returns>
         private int BroadcastMessage(string aMessage)
         {
-            if (!Subsciptions.ContainsKey(aMessage))
+            if (!Instance.Subsciptions.ContainsKey(aMessage))
                 return 0;
 
-            Subsciptions[aMessage].Invoke();
+            Instance.Subsciptions[aMessage].Invoke();
             return 1;
         }
 
