@@ -11,6 +11,7 @@
         /// Notes: This constructor ensures there is atleast 1 state for the machine at the begining
         public FiniteStateMachine(T initState)
         {
+            AddState(m_anyState);
             AddState(initState);
             m_currentState = initState;
         }
@@ -35,10 +36,14 @@
         /// 
         /// <returns>
         /// Returns 1 if state was added to the list,
-        /// and 0 if it already exist
+        /// 0 if it already exist,
+        /// and -1 if it already exist as the "any" state
         /// </returns>
         public int AddState(T aState)
         {
+            if (aState.ToString().ToLower() == m_anyState.ToString().ToLower())
+                return -1;
+
             if (m_states.Contains(aState))
                 return 0;
 
@@ -56,7 +61,7 @@
         /// 
         /// <returns>
         /// Returns 1 if the state(and transistions) was removed from the list(s),
-        /// 0 if the state did not exist,
+        /// 0 if the state did not exist, or is the "any" state
         /// and -1 if the object is currently in that state
         /// </returns>
         public int RemoveState(T aState)
@@ -64,7 +69,7 @@
             if (m_currentState.ToString().ToLower() == aState.ToString().ToLower())
                 return -1;
 
-            if (!m_states.Contains(aState))
+            if (!m_states.Contains(aState) || aState.ToString().ToLower() == m_anyState.ToString().ToLower())
                 return 0;
 
             foreach(T bState in m_states)
@@ -93,7 +98,7 @@
         /// <returns>
         /// Returns 1 if the transition was successfuly added to the list,
         /// 0 if it already exists,
-        /// and -1 if the states are invalid
+        /// and -1 if either state is invalid
         /// </returns>
         public int AddTransition(T aState, T bState, System.Delegate aHandler)
         {
@@ -107,6 +112,12 @@
                 return 0;
 
             m_transitions.Add(transistionKey, aHandler);
+            return 1;
+        }
+
+
+        public int AddTransistionFromAnyTo(T bState, System.Delegate aHandler)
+        {
             return 1;
         }
 
@@ -194,6 +205,11 @@
         /// The current state of the object
         /// </summary>
         private T m_currentState;
+
+        /// <summary>
+        /// Empty state for arbituary transistions
+        /// </summary>
+        private T m_anyState;
 
         /// <summary>
         /// List of possible states
