@@ -161,7 +161,7 @@
         public class Subscriber
         {
             /// <summary>
-            /// Adds a Callback to a list of Callbacks to be executed on the broadcast of aMessage
+            /// Sets a Callback to be executed on the broadcast of aMessage
             /// </summary>
             /// 
             /// <param name="aMessage">Message to listen for</param>
