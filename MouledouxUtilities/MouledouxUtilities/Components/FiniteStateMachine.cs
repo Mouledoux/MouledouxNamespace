@@ -121,6 +121,10 @@
             return 1;
         }
 
+        public int AddTransistionToAnyFrom(T aState)
+        {
+            return 1;
+        }
 
         /// <summary>
         /// Removes a transition of 2 states from the list of valid transitions
