@@ -9,6 +9,7 @@
     /// <summary>
     /// Collecion of basic variables to be sent via delegates
     /// </summary>
+    [System.Serializable]
     public sealed class Packet
     {
         /// <summary>
