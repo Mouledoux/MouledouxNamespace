@@ -21,7 +21,9 @@
         /// Returns the current state of the object
         /// </summary>
         /// 
-        /// <returns>Returns the current state</returns>
+        /// <returns>
+        /// Returns the current state
+        /// </returns>
         public T GetCurrentState()
         {
             return m_currentState;
@@ -35,9 +37,9 @@
         /// <param name="aState">State to be added to the list of possible states</param>
         /// 
         /// <returns>
-        /// Returns 1 if state was added to the list,
-        /// 0 if it already exist,
-        /// and -1 if it already exist as the "any" state
+        /// 0 the state was added to the list,
+        /// 1 the state already exist,
+        /// -1 the state already exist as the "any" state
         /// </returns>
         public int AddState(T aState)
         {
@@ -45,10 +47,10 @@
                 return -1;
 
             if (m_states.Contains(aState))
-                return 0;
+                return 1;
 
             m_states.Add(aState);
-            return 1;
+            return 0;
         }
 
 
@@ -60,9 +62,9 @@
         /// <param name="aState">State to be Removed from the list of possible states</param>
         /// 
         /// <returns>
-        /// Returns 1 if the state(and transistions) was removed from the list(s),
-        /// 0 if the state did not exist, or is the "any" state
-        /// and -1 if the object is currently in that state
+        /// 0 the state(and transistions) were removed from the list(s),
+        /// 1 the state did not exist, or is the "any" state
+        /// -1 the object is currently in that state
         /// </returns>
         public int RemoveState(T aState)
         {
@@ -70,7 +72,7 @@
                 return -1;
 
             if (!m_states.Contains(aState) || aState.ToString().ToLower() == m_anyState.ToString().ToLower())
-                return 0;
+                return 1;
 
             foreach(T bState in m_states)
             {
@@ -82,7 +84,7 @@
             }
             
             m_states.Remove(aState);
-            return 1;
+            return 0;
         }
 
 
@@ -96,9 +98,9 @@
         /// <param name="aHandler">Delegate to be invoked on successful transition</param>
         /// 
         /// <returns>
-        /// Returns 1 if the transition was successfuly added to the list,
-        /// 0 if it already exists,
-        /// and -1 if either state is invalid
+        /// 0 the transition was successfuly added to the list,
+        /// 1 the transistion already exists,
+        /// -1 either state is invalid
         /// </returns>
         public int AddTransition(T aState, T bState, System.Delegate aHandler)
         {
@@ -109,10 +111,10 @@
             transistionKey = transistionKey.ToLower();
 
             if (m_transitions.ContainsKey(transistionKey))
-                return 0;
+                return 1;
 
             m_transitions.Add(transistionKey, aHandler);
-            return 1;
+            return 0;
         }
 
 
@@ -134,9 +136,9 @@
         /// <param name="bState">State the object would be transitioning to</param>
         /// 
         /// <returns>
-        /// Returns 1 if the transition was successfuly removed from the list,
-        /// 0 if it did not exist,
-        /// and -1 if the states are invalid
+        /// 0 the transition was successfuly removed from the list,
+        /// 1 the transistion did not exist,
+        /// -1 the states are invalid
         /// </returns>
         public int RemoveTransition(T aState, T bState)
         {
@@ -147,10 +149,10 @@
             transistionKey = transistionKey.ToLower();
 
             if (!m_transitions.ContainsKey(transistionKey))
-                return 0;
+                return 1;
 
             m_transitions.Remove(transistionKey);
-            return 1;
+            return 0;
         }
 
 
@@ -161,8 +163,9 @@
         /// <param name="aState">State the object would be starting in</param>
         /// <param name="bState">State the object would be transistioning to</param>
         /// 
-        /// <returns>Returns TRUE if the transistion is valid,
-        /// and FALSE if the transistion is not valid
+        /// <returns>
+        /// TRUE the transistion is valid,
+        /// FALSE the transistion is not valid
         /// </returns>
         public bool CheckTransition(T aState, T bState)
         {
@@ -180,9 +183,9 @@
         /// <param name="bState">State to transistion to from the currrent</param>
         /// 
         /// <returns>
-        /// Returns 1 if the transistion was successfun,
-        /// 0 if it was not a valid transistion,
-        /// and -1 if the new state is invalid
+        /// 0 the transistion was successful,
+        /// 1 it's not a valid transistion,
+        /// -1 if the new state is invalid
         /// </returns>
         public int MakeTransistionTo(T bState)
         {
@@ -193,18 +196,18 @@
             transistionKey = transistionKey.ToLower();
 
             if (!m_transitions.ContainsKey(transistionKey))
-                return 0;
+                return 1;
 
             m_transitions[transistionKey].DynamicInvoke();
             m_currentState = bState;
 
-            return 1;
+            return 0;
         }
 
-        
-        
+
+
         // Vairables //////////
-         
+        #region Variables      
         /// <summary>
         /// The current state of the object
         /// </summary>
@@ -226,5 +229,6 @@
         /// </summary>
         private System.Collections.Generic.Dictionary<string, System.Delegate> m_transitions =
             new System.Collections.Generic.Dictionary<string, System.Delegate>();
+        #endregion
     }
 }
