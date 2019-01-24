@@ -32,15 +32,43 @@
         private System.Collections.Generic.Dictionary<string, Callback.Callback> subscriptions =
             new System.Collections.Generic.Dictionary<string, Callback.Callback>();
 
+        private System.Collections.Generic.Dictionary<string, BlockedMessage> blockedMessages =
+            new System.Collections.Generic.Dictionary<string, BlockedMessage>();
+
 
         /// <summary>
         /// Checks to see if their are any Subscribers to the broadcasted message
         /// and invokes ALL callbacks associated with it
         /// </summary>
+        /// 
         /// <param name="message">The message to be broadcasted (case sensitive)</param>
-        /// <param name="data">Packet of information to be used by ALL recieving parties</param>
-        public void NotifySubscribers(string message, Callback.Packet data)
+        /// <param name="data">Packet of information to be used by ALL recieving parties</param>    
+        /// 
+        /// <returns>
+        /// 0 the message was broadcasted successfully
+        /// 1 the message was blocked, but is now valid
+        /// -1 the message is blocked
+        /// </returns>
+        public int NotifySubscribers(string message, Callback.Packet data)
         {
+            // Temporary BlockedMessage for checking blacklist
+            BlockedMessage blocked;
+
+            // Value to be returned
+            int returnValue = 0;
+
+
+            if(blockedMessages.TryGetValue(message, out blocked))
+            {
+                if (blocked.blockTime < 0 || --blocked.blockTime > 0) return -1;
+
+                else if(blocked.blockTime == 0)
+                {
+                    UnblockMessage(message);
+                    returnValue++;
+                }
+            }
+
             // Temporary delegate container for modifying subscription delegates 
             Callback.Callback cb;
 
@@ -50,8 +78,67 @@
                 // Invokes ALL associated delegates with the data Packet as the argument
                 cb.Invoke(data);
             }
+
+            return returnValue;
         }
 
+        /// <summary>
+        /// Checks to see if their are any Subscribers to the broadcasted message
+        /// and invokes ALL callbacks associated with it with an empty packet
+        /// </summary>
+        /// 
+        /// <param name="message">The message to be broadcasted (case sensitive)</param>
+        ///         
+        /// <returns>
+        /// 0 the message was broadcasted successfully
+        /// 1 the message was blocked, but is now valid
+        /// -1 the message is blocked
+        /// </returns>
+        public int NotifySubscribers(string message)
+        {
+            Callback.Packet data = new Callback.Packet();
+            return NotifySubscribers(message, data);
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// 
+        /// <param name="message">Message to be blocked</param>
+        /// 
+        /// <returns></returns>
+        public int BlockMessage(string message, int blockTime)
+        {
+            if (blockedMessages.ContainsKey(message)) return -1;
+            else blockedMessages.Add(message, new BlockedMessage(message, blockTime)); return 0;
+        }
+
+
+        public int UnblockMessage(string message)
+        {
+            if (!blockedMessages.ContainsKey(message)) return -1;
+            
+            blockedMessages.Remove(message);
+            return 0;
+        }
+
+
+        private struct BlockedMessage
+        {
+            /// <summary>
+            /// Constructor for blocked messages
+            /// </summary>
+            /// <param name="aMessage">Message to be blocked</param>
+            /// <param name="aBlockTime">How many broadcast attempty will be blocked. Set to -1 for infinity</param>
+            public BlockedMessage(string aMessage, int aBlockTime)
+            {
+                message = aMessage;
+                blockTime = aBlockTime;
+            }
+
+            public string message;
+            public int blockTime;
+        }
 
         /// <summary>
         /// Base class for all entities that will be listing for broadcasts
