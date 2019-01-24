@@ -32,6 +32,7 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="Callback\Callback.cs" />
+    <Compile Include="Components\DecisionTree.cs" />
     <Compile Include="Components\FiniteStateMachine.cs" />
     <Compile Include="Components\Mediator.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

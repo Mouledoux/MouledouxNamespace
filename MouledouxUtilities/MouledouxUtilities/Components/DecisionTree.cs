@@ -8,8 +8,11 @@
         public Node currentNode { get { return _currentNode; } }
 
 
+
         public sealed class Node
         {
+            private float _value;
+
 
         }
     }
