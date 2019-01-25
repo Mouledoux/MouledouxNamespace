@@ -32,8 +32,12 @@
         private System.Collections.Generic.Dictionary<string, Callback.Callback> subscriptions =
             new System.Collections.Generic.Dictionary<string, Callback.Callback>();
 
+        /// <summary>
+        /// Dictionary of blocked messages, and their expiration time
+        /// </summary>
         private System.Collections.Generic.Dictionary<string, BlockedMessage> blockedMessages =
             new System.Collections.Generic.Dictionary<string, BlockedMessage>();
+
 
 
         /// <summary>
@@ -46,7 +50,7 @@
         /// 
         /// <returns>
         /// 0 the message was broadcasted successfully
-        /// 1 the message was blocked, but is now valid
+        /// 1 the message was blocked, but is now valid, and has been broadcasted
         /// -1 the message is blocked
         /// </returns>
         public int NotifySubscribers(string message, Callback.Packet data)
@@ -100,20 +104,50 @@
             return NotifySubscribers(message, data);
         }
 
+
+
         /// <summary>
-        /// 
+        /// Disables the message without unsubscribing
         /// </summary>
         /// 
         /// <param name="message">Message to be blocked</param>
+        /// <param name="blockTime">How many times the message will be blocked before the block expires</param>
+        /// <param name="addative">If the blockTime passed should be added to the remaining time, or replaced, if the message is already blocked</param>
         /// 
-        /// <returns></returns>
-        public int BlockMessage(string message, int blockTime)
+        /// <returns>
+        /// 0 the message has been blocked
+        /// 1 the message is already blocked
+        /// </returns>
+        public int BlockMessage(string message, int blockTime, bool addative = false)
         {
-            if (blockedMessages.ContainsKey(message)) return -1;
-            else blockedMessages.Add(message, new BlockedMessage(message, blockTime)); return 0;
+            if (blockedMessages.ContainsKey(message))
+            {
+                int remainingTime = blockedMessages[message].blockTime;
+
+                if (addative) blockTime += remainingTime;
+
+                blockedMessages.Remove(message);
+                BlockMessage(message, blockTime);
+
+                return 1;
+            }
+            else
+            {
+                blockedMessages.Add(message, new BlockedMessage(message, blockTime));
+                return 0;
+            }
         }
 
-
+        /// <summary>
+        /// Unblocks a preaviously blocked message
+        /// </summary>
+        /// 
+        /// <param name="message">Message to be unblocked</param>
+        /// 
+        /// <returns>
+        /// 0 message was unblocked
+        /// -1 message was not blocked to begin
+        /// </returns>
         public int UnblockMessage(string message)
         {
             if (!blockedMessages.ContainsKey(message)) return -1;
@@ -123,6 +157,10 @@
         }
 
 
+
+        /// <summary>
+        /// Struct for storing a blocked message, and expiration time
+        /// </summary>
         private struct BlockedMessage
         {
             /// <summary>
@@ -136,7 +174,16 @@
                 blockTime = aBlockTime;
             }
 
+
+            /// <summary>
+            /// Message to be blocked
+            /// </summary>
             public string message;
+
+            /// <summary>
+            /// How many times the message will be rejected before the block expires
+            /// Less than 0 requires manual unblocking
+            /// </summary>
             public int blockTime;
         }
 
