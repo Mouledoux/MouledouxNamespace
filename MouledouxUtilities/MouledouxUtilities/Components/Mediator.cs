@@ -122,15 +122,14 @@
         {
             if (blockedMessages.ContainsKey(message))
             {
-                int remainingTime = blockedMessages[message].blockTime;
-
-                if (addative) blockTime += remainingTime;
+                blockTime += addative ? blockedMessages[message].blockTime : 0;
 
                 blockedMessages.Remove(message);
                 BlockMessage(message, blockTime);
 
                 return 1;
             }
+
             else
             {
                 blockedMessages.Add(message, new BlockedMessage(message, blockTime));
