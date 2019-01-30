@@ -53,7 +53,7 @@
         /// 1 the message was blocked, but is now valid, and has been broadcasted
         /// -1 the message is blocked
         /// </returns>
-        public int NotifySubscribers(string message, Callback.Packet data)
+        public int NotifySubscribers(string message, Callback.Packet data = null)
         {
             // Temporary BlockedMessage for checking blacklist
             BlockedMessage blocked;
@@ -73,6 +73,9 @@
                 }
             }
 
+            // Makes sure the datapack has been set to something, even if one isn't provided
+            data = data == null ? new Callback.Packet() : data;
+
             // Temporary delegate container for modifying subscription delegates 
             Callback.Callback cb;
 
@@ -86,23 +89,24 @@
             return returnValue;
         }
 
-        /// <summary>
-        /// Checks to see if their are any Subscribers to the broadcasted message
-        /// and invokes ALL callbacks associated with it with an empty packet
-        /// </summary>
-        /// 
-        /// <param name="message">The message to be broadcasted (case sensitive)</param>
-        ///         
-        /// <returns>
-        /// 0 the message was broadcasted successfully
-        /// 1 the message was blocked, but is now valid
-        /// -1 the message is blocked
-        /// </returns>
-        public int NotifySubscribers(string message)
-        {
-            Callback.Packet data = new Callback.Packet();
-            return NotifySubscribers(message, data);
-        }
+        ///// Old quick broadcast
+        ///// <summary>
+        ///// Checks to see if their are any Subscribers to the broadcasted message
+        ///// and invokes ALL callbacks associated with it with an empty packet
+        ///// </summary>
+        ///// 
+        ///// <param name="message">The message to be broadcasted (case sensitive)</param>
+        /////         
+        ///// <returns>
+        ///// 0 the message was broadcasted successfully
+        ///// 1 the message was blocked, but is now valid
+        ///// -1 the message is blocked
+        ///// </returns>
+        //public int NotifySubscribers(string message)
+        //{
+        //    Callback.Packet data = new Callback.Packet();
+        //    return NotifySubscribers(message, data);
+        //}
 
 
 
