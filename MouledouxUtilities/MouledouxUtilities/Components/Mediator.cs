@@ -250,7 +250,7 @@
             /// <param name="container">Refrence to the dictionary of subscriptions we want to modify</param>
             /// <param name="message">The message to unsubscribe from (case sensitive)</param>
             /// <param name="callback">The delegate to be removed from the broadcast message</param>
-            public void Unsubscribe(ref System.Collections.Generic.Dictionary<string, Callback.Callback> container, string message, Callback.Callback callback)
+            private void Unsubscribe(ref System.Collections.Generic.Dictionary<string, Callback.Callback> container, string message, Callback.Callback callback)
             {
                 // Temporary delegate container for modifying subscription delegates 
                 Callback.Callback cb;
@@ -306,7 +306,7 @@
 
             /// !!! IMPORTANT !!! ///
             /// The method below - UnsubscribeAll()
-            /// MUST BE CALLED whenever a class inheriting from subscriber is removed
+            /// MUST BE CALLED whenever a class using a subscriber is removed
             /// If it is not, you WILL get NULL REFRENCE ERRORS
 
             /// <summary>
