@@ -83,6 +83,11 @@
             // Check to see if the message has any valid subscriptions
             if (instance.subscriptions.TryGetValue(message, out cb))
             {
+
+                for(int i = cb.GetInvocationList().Length - 1; i >= 0; i--)
+                    if (cb.GetInvocationList()[i].Target == null)
+                        cb -= (Callback.Callback)cb.GetInvocationList()[i];
+
                 // Invokes ALL associated delegates with the data Packet as the argument
                 cb.Invoke(data);
             }
