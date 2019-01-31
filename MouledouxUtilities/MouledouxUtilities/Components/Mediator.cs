@@ -51,7 +51,6 @@
         /// 
         /// <returns>
         /// 0 the message was broadcasted successfully
-        /// 1 the message was blocked, but is now valid, and has been broadcasted
         /// -1 the message is blocked
         /// </returns>
         public int NotifySubscribers(string message, Callback.Packet data = null)
@@ -59,20 +58,9 @@
             // Temporary BlockedMessage for checking blacklist
             BlockedMessage blocked;
 
-            // Value to be returned
-            int returnValue = 0;
-
-
+            // Checks if the message is being blocked, and reduces the remaining time if it is
             if(blockedMessages.TryGetValue(message, out blocked))
-            {
                 if (blocked.blockTime < 0 || --blocked.blockTime > 0) return -1;
-
-                else if(blocked.blockTime == 0)
-                {
-                    UnblockMessage(message);
-                    returnValue++;
-                }
-            }
 
             // Makes sure the datapack has been set to something, even if one isn't provided
             data = data == null ? new Callback.Packet() : data;
@@ -89,11 +77,11 @@
                     if (cb.GetInvocationList()[i].Target == null)
                         cb -= (Callback.Callback)cb.GetInvocationList()[i];
 
-                // Invokes ALL associated delegates with the data Packet as the argument
+                // Invokes all remaining associated delegates with the data Packet as the argument
                 cb.Invoke(data);
             }
 
-            return returnValue;
+            return 0;
         }
 
         ///// Old quick broadcast
