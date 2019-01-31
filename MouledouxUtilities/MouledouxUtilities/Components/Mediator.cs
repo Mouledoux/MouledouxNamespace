@@ -71,7 +71,6 @@
             // Check to see if the message has any valid subscriptions
             if (instance.subscriptions.TryGetValue(message, out cb))
             {
-
                 // Checks all refrences in the delegate, and removes any with missing target objects
                 for(int i = cb.GetInvocationList().Length - 1; i >= 0; i--)
                     if (cb.GetInvocationList()[i].Target == null)
