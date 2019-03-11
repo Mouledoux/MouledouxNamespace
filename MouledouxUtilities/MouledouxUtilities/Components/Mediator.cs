@@ -111,7 +111,7 @@
         /// 
         /// <param name="message">Message to be blocked</param>
         /// <param name="blockTime">How many times the message will be blocked before the block expires</param>
-        /// <param name="addative">If the blockTime passed should be added to the remaining time, or replaced, if the message is already blocked</param>
+        /// <param name="addative">If the blockTime passed should be added to the remaining time, or replace the ramining time, if the message is already blocked</param>
         /// 
         /// <returns>
         /// 0 the message has been blocked
