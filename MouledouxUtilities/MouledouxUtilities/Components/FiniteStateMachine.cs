@@ -56,13 +56,13 @@
 
         /// <summary>
         /// Removes a state from the list of possible states,
-        /// and all transistions involving the state
+        /// and all transitions involving the state
         /// </summary>
         /// 
         /// <param name="aState">State to be Removed from the list of possible states</param>
         /// 
         /// <returns>
-        /// 0 the state(and transistions) were removed from the list(s),
+        /// 0 the state(and transitions) were removed from the list(s),
         /// 1 the state did not exist, or is the "any" state
         /// -1 the object is currently in that state
         /// </returns>
@@ -98,8 +98,8 @@
         /// <param name="aHandler">Delegate to be invoked on successful transition</param>
         /// 
         /// <returns>
-        /// 0 the transition was successfuly added to the list,
-        /// 1 the transistion already exists,
+        /// 0 the transition was successfully added to the list,
+        /// 1 the transition already exists,
         /// -1 either state is invalid
         /// </returns>
         public int AddTransition(T aState, T bState, System.Delegate aHandler)
@@ -107,23 +107,23 @@
             if (!m_states.Contains(aState) || !m_states.Contains(bState))
                 return -1;
 
-            string transistionKey = aState.ToString() + "->" + bState.ToString();
-            transistionKey = transistionKey.ToLower();
+            string transitionKey = aState.ToString() + "->" + bState.ToString();
+            transitionKey = transitionKey.ToLower();
 
-            if (m_transitions.ContainsKey(transistionKey))
+            if (m_transitions.ContainsKey(transitionKey))
                 return 1;
 
-            m_transitions.Add(transistionKey, aHandler);
+            m_transitions.Add(transitionKey, aHandler);
             return 0;
         }
 
 
-        public int AddTransistionFromAnyTo(T bState, System.Delegate aHandler)
+        public int AddTransitionFromAnyTo(T bState, System.Delegate aHandler)
         {
             return 1;
         }
 
-        public int AddTransistionToAnyFrom(T aState)
+        public int AddTransitionToAnyFrom(T aState)
         {
             return 1;
         }
@@ -136,8 +136,8 @@
         /// <param name="bState">State the object would be transitioning to</param>
         /// 
         /// <returns>
-        /// 0 the transition was successfuly removed from the list,
-        /// 1 the transistion did not exist,
+        /// 0 the transition was successfully removed from the list,
+        /// 1 the transition did not exist,
         /// -1 the states are invalid
         /// </returns>
         public int RemoveTransition(T aState, T bState)
@@ -145,13 +145,13 @@
             if (!m_states.Contains(aState) || !m_states.Contains(bState))
                 return -1;
 
-            string transistionKey = aState.ToString() + "->" + bState.ToString();
-            transistionKey = transistionKey.ToLower();
+            string transitionKey = aState.ToString() + "->" + bState.ToString();
+            transitionKey = transitionKey.ToLower();
 
-            if (!m_transitions.ContainsKey(transistionKey))
+            if (!m_transitions.ContainsKey(transitionKey))
                 return 1;
 
-            m_transitions.Remove(transistionKey);
+            m_transitions.Remove(transitionKey);
             return 0;
         }
 
@@ -161,44 +161,44 @@
         /// </summary>
         /// 
         /// <param name="aState">State the object would be starting in</param>
-        /// <param name="bState">State the object would be transistioning to</param>
+        /// <param name="bState">State the object would be transitioning to</param>
         /// 
         /// <returns>
-        /// TRUE the transistion is valid,
-        /// FALSE the transistion is not valid
+        /// TRUE the transition is valid,
+        /// FALSE the transition is not valid
         /// </returns>
         public bool CheckTransition(T aState, T bState)
         {
-            string transistionKey = aState.ToString() + "->" + bState.ToString();
-            transistionKey = transistionKey.ToLower();
+            string transitionKey = aState.ToString() + "->" + bState.ToString();
+            transitionKey = transitionKey.ToLower();
 
-            return (m_transitions.ContainsKey(transistionKey));
+            return (m_transitions.ContainsKey(transitionKey));
         }
 
 
         /// <summary>
-        /// Makes all valid transistions and their handeler invokes
+        /// Makes all valid transitions and their handler invokes
         /// </summary>
         /// 
-        /// <param name="bState">State to transistion to from the currrent</param>
+        /// <param name="bState">State to transition to from the current</param>
         /// 
         /// <returns>
-        /// 0 the transistion was successful,
-        /// 1 it's not a valid transistion,
+        /// 0 the transition was successful,
+        /// 1 it's not a valid transition,
         /// -1 if the new state is invalid
         /// </returns>
-        public int MakeTransistionTo(T bState)
+        public int MakeTransitionTo(T bState)
         {
             if (!m_states.Contains(bState))
                 return -1;
 
-            string transistionKey = m_currentState.ToString() + "->" + bState.ToString();
-            transistionKey = transistionKey.ToLower();
+            string transitionKey = m_currentState.ToString() + "->" + bState.ToString();
+            transitionKey = transitionKey.ToLower();
 
-            if (!m_transitions.ContainsKey(transistionKey))
+            if (!m_transitions.ContainsKey(transitionKey))
                 return 1;
 
-            m_transitions[transistionKey].DynamicInvoke();
+            m_transitions[transitionKey].DynamicInvoke();
             m_currentState = bState;
 
             return 0;
@@ -206,7 +206,7 @@
 
 
 
-        // Vairables //////////
+        // Variables //////////
         #region Variables      
         /// <summary>
         /// The current state of the object
@@ -214,7 +214,7 @@
         private T m_currentState;
 
         /// <summary>
-        /// Empty state for arbituary transistions
+        /// Empty state for arbitrary transitions
         /// </summary>
         private T m_anyState;
 
@@ -225,7 +225,7 @@
             new System.Collections.Generic.List<T>();
 
         /// <summary>
-        /// Dictionary of transistions with associated transistion handlers
+        /// Dictionary of transitions with associated transition handlers
         /// </summary>
         private System.Collections.Generic.Dictionary<string, System.Delegate> m_transitions =
             new System.Collections.Generic.Dictionary<string, System.Delegate>();

@@ -235,9 +235,9 @@
             /// <param name="callback">The delegate to be linked to the broadcast message</param>
             public void Subscribe(string message, Callback.Callback callback)
             {
-                // First, adds the subscription to the internaal records
+                // First, adds the subscription to the internal records
                 Subscribe(ref localSubscriptions, message, callback);
-                // Then, adds the subcription to the public records
+                // Then, adds the subscription to the public records
                 Subscribe(ref instance.subscriptions, message, callback);
             }
 
@@ -245,7 +245,7 @@
             /// <summary>
             /// Unlinks a custom delegate from a message in a SPECIFIC subscription dictionary
             /// </summary>
-            /// <param name="container">Refrence to the dictionary of subscriptions we want to modify</param>
+            /// <param name="container">Reference to the dictionary of subscriptions we want to modify</param>
             /// <param name="message">The message to unsubscribe from (case sensitive)</param>
             /// <param name="callback">The delegate to be removed from the broadcast message</param>
             private void Unsubscribe(ref System.Collections.Generic.Dictionary<string, Callback.Callback> container, string message, Callback.Callback callback)
@@ -266,7 +266,7 @@
                     // Check the modified cb to see if there are any delegates left
                     if (cb == null)
                     {
-                        // If tere is not, then remove the subscription completely
+                        // If there is not, then remove the subscription completely
                         container.Remove(message);
                     }
                     else
@@ -287,7 +287,7 @@
             {
                 // First, remove the subscription from the internal records
                 Unsubscribe(ref localSubscriptions, message, callback);
-                // Then, remove the subcription from the public records
+                // Then, remove the subscription from the public records
                 Unsubscribe(ref instance.subscriptions, message, callback);
             }
 
@@ -296,7 +296,7 @@
             /// Unlinks all (local) delegates from given broadcast message
             /// </summary>
             /// <param name="message">The message to unsubscribe from (case sensitive)</param>
-            public void UnsubcribeAllFrom(string message)
+            public void UnsubscribeAllFrom(string message)
             {
                 Unsubscribe(message, localSubscriptions[message]);
             }
@@ -305,7 +305,7 @@
             /// !!! IMPORTANT !!! ///
             /// The method below - UnsubscribeAll()
             /// MUST BE CALLED whenever a class using a subscriber is removed
-            /// If it is not, you WILL get NULL REFRENCE ERRORS
+            /// If it is not, you WILL get NULL REFERENCE ERRORS
 
             /// <summary>
             /// Unlinks all (local) delegates from every (local) broadcast message
