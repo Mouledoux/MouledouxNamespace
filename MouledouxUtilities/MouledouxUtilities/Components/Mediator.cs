@@ -202,7 +202,7 @@
             /// <summary>
             /// Links a custom delegate to a message in a SPECIFIC subscription dictionary
             /// </summary>
-            /// <param name="container">Refrence to the dictionary of subscriptions we want to modify</param>
+            /// <param name="container">Reference to the dictionary of subscriptions we want to modify</param>
             /// <param name="message">The message to subscribe to (case sensitive)</param>
             /// <param name="callback">The delegate to be linked to the broadcast message</param>
             private void Subscribe(ref System.Collections.Generic.Dictionary<string, Callback.Callback> container, string message, Callback.Callback callback)
