@@ -47,7 +47,7 @@
         /// </summary>
         /// 
         /// <param name="message">The message to be broadcasted (case sensitive)</param>
-        /// <param name="data">Packet of information to be used by ALL recieving parties</param>    
+        /// <param name="data">Packet of information to be used by ALL receiving parties</param>    
         /// 
         /// <returns>
         /// 0 the message was broadcasted successfully
@@ -71,7 +71,7 @@
             // Check to see if the message has any valid subscriptions
             if (instance.subscriptions.TryGetValue(message, out cb))
             {
-                // Checks all refrences in the delegate, and removes any with missing target objects
+                // Checks all references in the delegate, and removes any with missing target objects
                 for(int i = cb.GetInvocationList().Length - 1; i >= 0; i--)
                     if (cb.GetInvocationList()[i].Target == null)
                         cb -= (Callback.Callback)cb.GetInvocationList()[i];
@@ -111,17 +111,17 @@
         /// 
         /// <param name="message">Message to be blocked</param>
         /// <param name="blockTime">How many times the message will be blocked before the block expires</param>
-        /// <param name="addative">If the blockTime passed should be added to the remaining time, or replace the ramining time, if the message is already blocked</param>
+        /// <param name="additive">If the blockTime passed should be added to the remaining time, or replace the remaining time, if the message is already blocked</param>
         /// 
         /// <returns>
         /// 0 the message has been blocked
         /// 1 the message is already blocked
         /// </returns>
-        public int BlockMessage(string message, int blockTime, bool addative = false)
+        public int BlockMessage(string message, int blockTime, bool additive = false)
         {
             if (blockedMessages.ContainsKey(message))
             {
-                blockTime += addative ? blockedMessages[message].blockTime : 0;
+                blockTime += additive ? blockedMessages[message].blockTime : 0;
 
                 blockedMessages.Remove(message);
                 BlockMessage(message, blockTime);
@@ -137,7 +137,7 @@
         }
 
         /// <summary>
-        /// Unblocks a preaviously blocked message
+        /// Unblocks a previously blocked message
         /// </summary>
         /// 
         /// <param name="message">Message to be unblocked</param>
