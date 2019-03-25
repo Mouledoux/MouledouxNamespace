@@ -55,6 +55,8 @@
         /// </returns>
         public int NotifySubscribers(string message, Callback.Packet data = null)
         {
+            message = message.ToLower();
+
             // Temporary BlockedMessage for checking blacklist
             BlockedMessage blocked;
 
@@ -119,6 +121,8 @@
         /// </returns>
         public int BlockMessage(string message, int blockTime, bool additive = false)
         {
+            message = message.ToLower();
+
             if (blockedMessages.ContainsKey(message))
             {
                 blockTime += additive ? blockedMessages[message].blockTime : 0;
@@ -148,6 +152,8 @@
         /// </returns>
         public int UnblockMessage(string message)
         {
+            message = message.ToLower();
+
             if (!blockedMessages.ContainsKey(message)) return -1;
             
             blockedMessages.Remove(message);
@@ -170,7 +176,7 @@
             /// <param name="aBlockTime">How many broadcast attempty will be blocked. Set to -1 for infinity</param>
             public BlockedMessage(string aMessage, int aBlockTime)
             {
-                message = aMessage;
+                message = aMessage.ToLower();
                 blockTime = aBlockTime;
             }
 
@@ -207,6 +213,8 @@
             /// <param name="callback">The delegate to be linked to the broadcast message</param>
             private void Subscribe(ref System.Collections.Generic.Dictionary<string, Callback.Callback> container, string message, Callback.Callback callback)
             {
+                message = message.ToLower();
+
                 // Temporary delegate container for modifying subscription delegates 
                 Callback.Callback cb;
 
@@ -250,6 +258,8 @@
             /// <param name="callback">The delegate to be removed from the broadcast message</param>
             private void Unsubscribe(ref System.Collections.Generic.Dictionary<string, Callback.Callback> container, string message, Callback.Callback callback)
             {
+                message = message.ToLower();
+                
                 // Temporary delegate container for modifying subscription delegates 
                 Callback.Callback cb;
 
