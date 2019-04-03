@@ -58,16 +58,4 @@
             this.strings = strings;
         }
     }
-
-    /* Hash packet, removed for now
-    public sealed class HashPacket
-    {
-        public System.Collections.Hashtable hashData;
-
-        public HashPacket()
-        {
-            hashData = new System.Collections.Hashtable();
-        }
-    }
-    *******************************************************/
 }
