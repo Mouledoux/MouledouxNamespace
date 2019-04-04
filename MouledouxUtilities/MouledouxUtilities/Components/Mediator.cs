@@ -40,6 +40,8 @@
             new System.Collections.Generic.Dictionary<string, BlockedMessage>();
 
 
+        private System.Collections.Generic.List<string> heldMessages = 
+        new System.Collections.Generic.List<string>();
 
 
 
@@ -53,9 +55,10 @@
         /// 
         /// <returns>
         /// 0 the message was broadcasted successfully
+        /// 1 the there were no subscribers to the message
         /// -1 the message is blocked
         /// </returns>
-        public int NotifySubscribers(string message, object[] args = null)
+        public int NotifySubscribers(string message, object[] args = null, bool holdMessage = false)
         {
             message = message.ToLower();
 
@@ -82,9 +85,16 @@
 
                 // Invokes all remaining associated delegates with the data Packet as the argument
                 cb.Invoke(args);
+
+                return 0;
             }
 
-            return 0;
+            else if(holdMessage && !heldMessages.Contains(message))
+            {
+                heldMessages.Add(message);
+            }
+
+            return 1;
         }
 
 
@@ -197,7 +207,7 @@
             /// <param name="container">Reference to the dictionary of subscriptions we want to modify</param>
             /// <param name="message">The message to subscribe to (case sensitive)</param>
             /// <param name="callback">The delegate to be linked to the broadcast message</param>
-            private void Subscribe(ref System.Collections.Generic.Dictionary<string, Callback.Callback> container, string message, Callback.Callback callback)
+            private void Subscribe(ref System.Collections.Generic.Dictionary<string, Callback.Callback> container, string message, Callback.Callback callback, bool acceptStaleMessages = false)
             {
                 message = message.ToLower();
 
@@ -219,6 +229,13 @@
                 cb += callback;
                 // Set the delegate linked to the message to cb
                 container[message] = cb;
+
+
+                if(acceptStaleMessages && instance.heldMessages.Contains(message))
+                {
+                    instance.heldMessages.Remove(message);
+                    cb.Invoke(null);
+                }
             }
 
 
