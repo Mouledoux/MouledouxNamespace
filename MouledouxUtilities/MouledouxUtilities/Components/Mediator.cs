@@ -45,6 +45,8 @@
 
 
 
+
+
         /// <summary>
         /// Checks to see if their are any Subscribers to the broadcasted message
         /// and invokes ALL callbacks associated with it
@@ -78,12 +80,7 @@
             // Check to see if the message has any valid subscriptions
             if (instance.subscriptions.TryGetValue(message, out cb))
             {
-                // Checks all references in the delegate, and removes any with missing target objects
-                for(int i = cb.GetInvocationList().Length - 1; i >= 0; i--)
-                    if (cb.GetInvocationList()[i].Target == null)
-                        cb -= (Callback.Callback)cb.GetInvocationList()[i];
-
-                // Invokes all remaining associated delegates with the data Packet as the argument
+                // Invokes all associated delegates with the args array
                 cb.Invoke(args);
 
                 return 0;
@@ -160,6 +157,11 @@
 
 
 
+
+
+
+
+        /// ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ----------
         /// <summary>
         /// Struct for storing a blocked message, and expiration time
         /// </summary>
@@ -189,6 +191,15 @@
             public int blockTime;
         }
 
+
+
+
+
+
+
+
+
+        /// ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ----------
         /// <summary>
         /// Base class for all entities that will be listing for broadcasts
         /// </summary>
