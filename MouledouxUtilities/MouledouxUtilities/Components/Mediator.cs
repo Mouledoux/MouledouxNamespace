@@ -218,7 +218,7 @@
             /// <param name="container">Reference to the dictionary of subscriptions we want to modify</param>
             /// <param name="message">The message to subscribe to (case sensitive)</param>
             /// <param name="callback">The delegate to be linked to the broadcast message</param>
-            private void Subscribe(ref System.Collections.Generic.Dictionary<string, Callback.Callback> container, string message, Callback.Callback callback, bool acceptStaleMessages = false)
+            private void Subscribe(ref System.Collections.Generic.Dictionary<string, Callback.Callback> container, string message, Callback.Callback callback)
             {
                 message = message.ToLower();
 
@@ -240,13 +240,6 @@
                 cb += callback;
                 // Set the delegate linked to the message to cb
                 container[message] = cb;
-
-
-                if(acceptStaleMessages && instance.heldMessages.Contains(message))
-                {
-                    instance.heldMessages.Remove(message);
-                    cb.Invoke(null);
-                }
             }
 
 
@@ -255,12 +248,19 @@
             /// </summary>
             /// <param name="message">The message to subscribe to (case sensitive)</param>
             /// <param name="callback">The delegate to be linked to the broadcast message</param>
-            public void Subscribe(string message, Callback.Callback callback)
+            public void Subscribe(string message, Callback.Callback callback, bool acceptStaleMessages = false)
             {
                 // First, adds the subscription to the internal records
                 Subscribe(ref localSubscriptions, message, callback);
                 // Then, adds the subscription to the public records
                 Subscribe(ref instance.subscriptions, message, callback);
+
+
+                if(acceptStaleMessages && instance.heldMessages.Contains(message))
+                {
+                    instance.heldMessages.Remove(message);
+                    callback.Invoke(null);
+                }
             }
 
 
