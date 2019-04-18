@@ -305,10 +305,12 @@
             /// <summary>
             /// Unlinks a custom delegate from a message that may be breadcasted via a Publisher
             /// </summary>
-            /// <param name="message">The message to unsubscribe from (case sensitive)</param>
+            /// <param name="message">The message to unsubscribe from</param>
             /// <param name="callback">The delegate to be unlinked from the broadcast message</param>
             public void Unsubscribe(string message, Callback.Callback callback)
             {
+                message = message.ToLower();
+
                 // First, remove the subscription from the internal records
                 Unsubscribe(ref localSubscriptions, message, callback);
                 // Then, remove the subscription from the public records
@@ -319,9 +321,11 @@
             /// <summary>
             /// Unlinks all (local) delegates from given broadcast message
             /// </summary>
-            /// <param name="message">The message to unsubscribe from (case sensitive)</param>
+            /// <param name="message">The message to unsubscribe from</param>
             public void UnsubscribeAllFrom(string message)
             {
+                message = message.ToLower();
+
                 Unsubscribe(message, localSubscriptions[message]);
             }
 
@@ -329,7 +333,7 @@
             /// !!! IMPORTANT !!! ///
             /// The method below - UnsubscribeAll()
             /// MUST BE CALLED whenever a class using a subscriber is removed
-            /// If it is not, you WILL get NULL REFERENCE ERRORS
+            /// If it is not, you WILL GET NULL REFERENCE ERRORS
 
             /// <summary>
             /// Unlinks all (local) delegates from every (local) broadcast message
