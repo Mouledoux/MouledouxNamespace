@@ -3,15 +3,9 @@
     /// <summary>
     /// Callback action to be used by all subscribers
     /// </summary>
-    /// <param name="data">Predefined data Packet to act as potential arguments for subscriptions</param>
-    //public delegate void Callback(Packet data);
-
+    /// <param name="args">objects to act as arguments for subscriptions</param>
     public delegate void Callback(object[] args);
 
-    /// <summary>
-    /// Collecion of basic variables to be sent via delegates
-    /// </summary>
-    [System.Serializable]
     public sealed class Packet
     {
         /// <summary>

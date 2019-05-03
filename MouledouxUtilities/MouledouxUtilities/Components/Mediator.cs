@@ -19,7 +19,7 @@
                 {
                     _instance = new Mediator();
                 }
-
+                
                 return _instance;
             }
         }
