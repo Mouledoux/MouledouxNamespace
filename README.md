@@ -16,6 +16,6 @@ The Mouledoux namespace is a collection of classes and functions specifically ma
 - Callback
   - Void delegate that takes object[] args
   - Packet [depricated]
-  
-  ## In progress
-  - Decision trees (AI)
+
+## In progress
+- Decision trees (AI)
