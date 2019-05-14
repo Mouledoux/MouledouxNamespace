@@ -12,6 +12,7 @@ The Mouledoux namespace is a collection of classes and functions specifically ma
   - Add/remove arbitrary states
   - Add/remove transistions
   - "Any" state
+  - Transistion to/from states 
   - Invoke delegates on transistions (soon to be replaced with Mouledoux.Callback)
 - Callback
   - Void delegate that takes object[] args
