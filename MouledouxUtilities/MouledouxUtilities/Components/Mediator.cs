@@ -216,7 +216,7 @@
             /// Links a custom delegate to a message in a SPECIFIC subscription dictionary
             /// </summary>
             /// <param name="container">Reference to the dictionary of subscriptions we want to modify</param>
-            /// <param name="message">The message to subscribe to (case sensitive)</param>
+            /// <param name="message">The message to subscribe to</param>
             /// <param name="callback">The delegate to be linked to the broadcast message</param>
             private void Subscribe(ref System.Collections.Generic.Dictionary<string, Callback.Callback> container, string message, Callback.Callback callback)
             {
@@ -246,7 +246,7 @@
             /// <summary>
             /// Links a custom delegate to a message that may be breadcasted via a Publisher
             /// </summary>
-            /// <param name="message">The message to subscribe to (case sensitive)</param>
+            /// <param name="message">The message to subscribe to</param>
             /// <param name="callback">The delegate to be linked to the broadcast message</param>
             public void Subscribe(string message, Callback.Callback callback, bool acceptStaleMessages = false)
             {
@@ -268,7 +268,7 @@
             /// Unlinks a custom delegate from a message in a SPECIFIC subscription dictionary
             /// </summary>
             /// <param name="container">Reference to the dictionary of subscriptions we want to modify</param>
-            /// <param name="message">The message to unsubscribe from (case sensitive)</param>
+            /// <param name="message">The message to unsubscribe from</param>
             /// <param name="callback">The delegate to be removed from the broadcast message</param>
             private void Unsubscribe(ref System.Collections.Generic.Dictionary<string, Callback.Callback> container, string message, Callback.Callback callback)
             {
