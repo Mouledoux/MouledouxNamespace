@@ -39,7 +39,9 @@
         private System.Collections.Generic.Dictionary<string, BlockedMessage> blockedMessages =
             new System.Collections.Generic.Dictionary<string, BlockedMessage>();
 
-
+        /// <summary>
+        /// Dictionary of messages held to be re-broadcated once something is subscribed to it
+        /// </summary>
         private System.Collections.Generic.List<string> heldMessages = 
         new System.Collections.Generic.List<string>();
 
