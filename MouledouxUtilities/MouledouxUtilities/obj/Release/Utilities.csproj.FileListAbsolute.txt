@@ -8,3 +8,8 @@ C:\Users\EricM\Documents\GitHub\CSharp_Utilities\MouledouxUtilities\MouledouxUti
 C:\Users\EricM\Documents\GitHub\CSharp_Utilities\MouledouxUtilities\MouledouxUtilities\obj\Release\Utilities.csprojResolveAssemblyReference.cache
 C:\Users\EricM\Documents\GitHub\CSharp_Utilities\MouledouxUtilities\MouledouxUtilities\obj\Release\Mouledoux.dll
 C:\Users\EricM\Documents\GitHub\CSharp_Utilities\MouledouxUtilities\MouledouxUtilities\obj\Release\Mouledoux.pdb
+D:\Documents\GitHub\MouledouxNamespace\MouledouxUtilities\MouledouxUtilities\bin\Release\Mouledoux.dll
+D:\Documents\GitHub\MouledouxNamespace\MouledouxUtilities\MouledouxUtilities\bin\Release\Mouledoux.pdb
+D:\Documents\GitHub\MouledouxNamespace\MouledouxUtilities\MouledouxUtilities\obj\Release\Utilities.csproj.CoreCompileInputs.cache
+D:\Documents\GitHub\MouledouxNamespace\MouledouxUtilities\MouledouxUtilities\obj\Release\Mouledoux.dll
+D:\Documents\GitHub\MouledouxNamespace\MouledouxUtilities\MouledouxUtilities\obj\Release\Mouledoux.pdb
