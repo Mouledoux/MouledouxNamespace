@@ -6,6 +6,7 @@
     /// <param name="args">objects to act as arguments for subscriptions</param>
     public delegate void Callback(object[] args);
 
+    [System.Obsolete("Packets have been replaced with 'object arg[]'")]
     public sealed class Packet
     {
         /// <summary>
