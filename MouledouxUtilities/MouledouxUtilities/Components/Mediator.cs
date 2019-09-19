@@ -59,8 +59,8 @@
         /// 
         /// <returns>
         /// 0 the message was broadcasted successfully
-        /// 1 the there were no subscribers to the message
-        /// -1 the message is blocked
+        /// -1 the there were no current subscribers to the message
+        /// -2 the message exist but has no actions and was removed
         /// </returns>
         public static int NotifySubscribers(string message, object[] args = null, bool holdMessage = false)
         {
@@ -82,22 +82,46 @@
             // Check to see if the message has any valid subscriptions
             if (subscriptions.TryGetValue(message, out cb))
             {
+                // For all the Actions accociated with the message,
+                    // Check if they're still valid,
+                        // and remove them if they're not
                 System.Delegate[] dl = cb.GetInvocationList();
                 for(int i = 0; i < dl.Length; i++)
-                    if(dl[i].Target == null)
-                        cb -= dl[i] as System.Action<object[]>;
-                    
-                // Invokes all associated delegates with the args array
-                cb.Invoke(args);
-                return 0;
-            }
+                {                 
+                    System.Action<object[]> d = dl[i] as System.Action<object[]>;
+                    if(d.Target.Equals(null))
+                    {
+                        cb -= d;
+                    }
+                }
 
+                // Set the subscriptions to the new list
+                subscriptions[message] = cb;
+
+                // Double check if null since some may have just been removed
+                if(cb != null)
+                {
+                    subscriptions[message].Invoke(args);
+                    return 0;
+                }
+
+                // Clear out the subscriptons if they are now null
+                else
+                {
+                    subscriptions.Remove(message);
+                    return -2;
+                }
+            }
+            
+
+            // If nothing is listening to the message, but it's been marked to hold
             else if(holdMessage && !heldMessages.Contains(message))
             {
+                // add it to the held list
                 heldMessages.Add(message);
             }
 
-            return 1;
+            return -1;
         }
 
 
