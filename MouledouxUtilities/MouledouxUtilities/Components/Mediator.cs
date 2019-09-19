@@ -6,7 +6,7 @@
     public sealed class Mediator
     {
         /// The below code is a standard singleton
-        // #region Singleton
+        #region Singleton
         // private Mediator() { }
 
         // private static Mediator _instance;
@@ -23,15 +23,15 @@
         //         return _instance;
         //     }
         // }
-        // #endregion Singleton
+        #endregion Singleton
 
 
 
         /// <summary>
         /// Dictionary of subscription strings and associated delegate callbacks
         /// </summary>
-        private static System.Collections.Generic.Dictionary<string, Callback.Callback> subscriptions =
-            new System.Collections.Generic.Dictionary<string, Callback.Callback>();
+        private static System.Collections.Generic.Dictionary<string, System.Action<object[]>> subscriptions =
+            new System.Collections.Generic.Dictionary<string, System.Action<object[]>>();
 
         /// <summary>
         /// Dictionary of blocked messages, and their expiration time
@@ -77,14 +77,18 @@
             args = args == null ? new object[0] : args;
 
             // Temporary delegate container for modifying subscription delegates 
-            Callback.Callback cb;
+            System.Action<object[]> cb;
 
             // Check to see if the message has any valid subscriptions
             if (subscriptions.TryGetValue(message, out cb))
             {
+                System.Delegate[] dl = cb.GetInvocationList();
+                for(int i = 0; i < dl.Length; i++)
+                    if(dl[i].Target == null)
+                        cb -= dl[i] as System.Action<object[]>;
+                    
                 // Invokes all associated delegates with the args array
                 cb.Invoke(args);
-
                 return 0;
             }
 
@@ -210,8 +214,8 @@
             /// <summary>
             /// Personal, internal record of all active subscriptions
             /// </summary>
-            private System.Collections.Generic.Dictionary<string, Callback.Callback> localSubscriptions =
-                 new System.Collections.Generic.Dictionary<string, Callback.Callback>();
+            private System.Collections.Generic.Dictionary<string, System.Action<object[]>> localSubscriptions =
+                 new System.Collections.Generic.Dictionary<string, System.Action<object[]>>();
 
 
             /// <summary>
@@ -220,12 +224,12 @@
             /// <param name="container">Reference to the dictionary of subscriptions we want to modify</param>
             /// <param name="message">The message to subscribe to</param>
             /// <param name="callback">The delegate to be linked to the broadcast message</param>
-            private void Subscribe(ref System.Collections.Generic.Dictionary<string, Callback.Callback> container, string message, Callback.Callback callback)
+            private void Subscribe(ref System.Collections.Generic.Dictionary<string, System.Action<object[]>> container, string message, System.Action<object[]> callback)
             {
                 message = message.ToLower();
 
                 // Temporary delegate container for modifying subscription delegates 
-                Callback.Callback cb;
+                System.Action<object[]> cb;
 
                 // Check to see if there is not already a subscription to this message
                 if (!container.TryGetValue(message, out cb))
@@ -250,7 +254,7 @@
             /// </summary>
             /// <param name="message">The message to subscribe to</param>
             /// <param name="callback">The delegate to be linked to the broadcast message</param>
-            public void Subscribe(string message, Callback.Callback callback, bool acceptStaleMessages = false)
+            public void Subscribe(string message, System.Action<object[]> callback, bool acceptStaleMessages = false)
             {
                 // First, adds the subscription to the internal records
                 Subscribe(ref localSubscriptions, message, callback);
@@ -272,12 +276,12 @@
             /// <param name="container">Reference to the dictionary of subscriptions we want to modify</param>
             /// <param name="message">The message to unsubscribe from</param>
             /// <param name="callback">The delegate to be removed from the broadcast message</param>
-            private void Unsubscribe(ref System.Collections.Generic.Dictionary<string, Callback.Callback> container, string message, Callback.Callback callback)
+            private void Unsubscribe(ref System.Collections.Generic.Dictionary<string, System.Action<object[]>> container, string message, System.Action<object[]> callback)
             {
                 message = message.ToLower();
                 
                 // Temporary delegate container for modifying subscription delegates 
-                Callback.Callback cb;
+                System.Action<object[]> cb;
 
                 // Check to see if there is a subscription to this message
                 if (container.TryGetValue(message, out cb))
@@ -309,7 +313,7 @@
             /// </summary>
             /// <param name="message">The message to unsubscribe from</param>
             /// <param name="callback">The delegate to be unlinked from the broadcast message</param>
-            public void Unsubscribe(string message, Callback.Callback callback)
+            public void Unsubscribe(string message, System.Action<object[]> callback)
             {
                 message = message.ToLower();
 
