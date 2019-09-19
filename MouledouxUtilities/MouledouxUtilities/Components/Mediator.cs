@@ -6,43 +6,43 @@
     public sealed class Mediator
     {
         /// The below code is a standard singleton
-        #region Singleton
-        private Mediator() { }
+        // #region Singleton
+        // private Mediator() { }
 
-        private static Mediator _instance;
+        // private static Mediator _instance;
 
-        public static Mediator instance
-        {
-            get
-            {
-                if (_instance == null)
-                {
-                    _instance = new Mediator();
-                }
+        // public static Mediator instance
+        // {
+        //     get
+        //     {
+        //         if (_instance == null)
+        //         {
+        //             _instance = new Mediator();
+        //         }
                 
-                return _instance;
-            }
-        }
-        #endregion Singleton
+        //         return _instance;
+        //     }
+        // }
+        // #endregion Singleton
 
 
 
         /// <summary>
         /// Dictionary of subscription strings and associated delegate callbacks
         /// </summary>
-        private System.Collections.Generic.Dictionary<string, Callback.Callback> subscriptions =
+        private static System.Collections.Generic.Dictionary<string, Callback.Callback> subscriptions =
             new System.Collections.Generic.Dictionary<string, Callback.Callback>();
 
         /// <summary>
         /// Dictionary of blocked messages, and their expiration time
         /// </summary>
-        private System.Collections.Generic.Dictionary<string, BlockedMessage> blockedMessages =
+        private static System.Collections.Generic.Dictionary<string, BlockedMessage> blockedMessages =
             new System.Collections.Generic.Dictionary<string, BlockedMessage>();
 
         /// <summary>
         /// Dictionary of messages held to be re-broadcated once something is subscribed to it
         /// </summary>
-        private System.Collections.Generic.List<string> heldMessages = 
+        private static System.Collections.Generic.List<string> heldMessages = 
         new System.Collections.Generic.List<string>();
 
 
@@ -62,7 +62,7 @@
         /// 1 the there were no subscribers to the message
         /// -1 the message is blocked
         /// </returns>
-        public int NotifySubscribers(string message, object[] args = null, bool holdMessage = false)
+        public static int NotifySubscribers(string message, object[] args = null, bool holdMessage = false)
         {
             message = message.ToLower();
 
@@ -80,7 +80,7 @@
             Callback.Callback cb;
 
             // Check to see if the message has any valid subscriptions
-            if (instance.subscriptions.TryGetValue(message, out cb))
+            if (subscriptions.TryGetValue(message, out cb))
             {
                 // Invokes all associated delegates with the args array
                 cb.Invoke(args);
@@ -112,7 +112,7 @@
         /// 0 the message has been blocked
         /// 1 the message is already blocked
         /// </returns>
-        public int BlockMessage(string message, int blockTime, bool additive = false)
+        public static int BlockMessage(string message, int blockTime, bool additive = false)
         {
             message = message.ToLower();
 
@@ -145,7 +145,7 @@
         /// 0 message was unblocked
         /// -1 message was not blocked to begin
         /// </returns>
-        public int UnblockMessage(string message)
+        public static int UnblockMessage(string message)
         {
             message = message.ToLower();
 
@@ -203,7 +203,7 @@
 
         /// ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ----------
         /// <summary>
-        /// Base class for all entities that will be listing for broadcasts
+        /// Base class for all entities that will be listening for broadcasts
         /// </summary>
         public sealed class Subscriptions
         {
@@ -255,12 +255,12 @@
                 // First, adds the subscription to the internal records
                 Subscribe(ref localSubscriptions, message, callback);
                 // Then, adds the subscription to the public records
-                Subscribe(ref instance.subscriptions, message, callback);
+                Subscribe(ref Mediator.subscriptions, message, callback);
 
 
-                if(acceptStaleMessages && instance.heldMessages.Contains(message))
+                if(acceptStaleMessages && Mediator.heldMessages.Contains(message))
                 {
-                    instance.heldMessages.Remove(message);
+                    Mediator.heldMessages.Remove(message);
                     callback.Invoke(null);
                 }
             }
@@ -316,7 +316,7 @@
                 // First, remove the subscription from the internal records
                 Unsubscribe(ref localSubscriptions, message, callback);
                 // Then, remove the subscription from the public records
-                Unsubscribe(ref instance.subscriptions, message, callback);
+                Unsubscribe(ref Mediator.subscriptions, message, callback);
             }
 
 
@@ -344,7 +344,7 @@
             {
                 foreach (string message in localSubscriptions.Keys)
                 {
-                    Unsubscribe(ref instance.subscriptions, message, localSubscriptions[message]);
+                    Unsubscribe(ref Mediator.subscriptions, message, localSubscriptions[message]);
                 }
 
                 localSubscriptions.Clear();
