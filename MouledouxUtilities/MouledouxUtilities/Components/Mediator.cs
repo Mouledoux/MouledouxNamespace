@@ -63,8 +63,6 @@
         /// <returns>
         /// 0 the message was broadcasted successfully
         /// -1 the there were no current or unblocked subscribers to the message
-        /// -2 the message exist but has no actions and was removed
-        /// -3 the message was broadcasted, but some subscribers have been removed
         /// </returns>
         public static int NotifySubscribers(string message, object[] args = null, bool holdMessage = false)
         {
@@ -90,6 +88,7 @@
 
                 foreach (System.Action<object[]> d in delegateList)
                     cb -= d.Target.Equals(null) ? d : null;
+
 
 
                 if(cb == null)
