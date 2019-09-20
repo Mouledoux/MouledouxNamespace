@@ -49,18 +49,22 @@
 
 
 
+
+        /// ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ----------
         /// <summary>
         /// Checks to see if their are any Subscribers to the broadcasted message
         /// and invokes ALL callbacks associated with it
         /// </summary>
         /// 
         /// <param name="message">The message to be broadcasted (case sensitive)</param>
-        /// <param name="data">Packet of information to be used by ALL receiving parties</param>    
+        /// <param name="args">Object array of information to be used by ALL receiving parties</param> 
+        /// <param name="holdMessage">Should this message be held if there are no active subscriptions</param>   
         /// 
         /// <returns>
         /// 0 the message was broadcasted successfully
-        /// -1 the there were no current subscribers to the message
+        /// -1 the there were no current or unblocked subscribers to the message
         /// -2 the message exist but has no actions and was removed
+        /// -3 the message was broadcasted, but some subscribers have been removed
         /// </returns>
         public static int NotifySubscribers(string message, object[] args = null, bool holdMessage = false)
         {
@@ -68,6 +72,9 @@
 
             // Temporary BlockedMessage for checking blacklist
             BlockedMessage blocked;
+            // Temporary delegate container for modifying subscription delegates 
+            System.Action<object[]> cb;
+
 
             // Checks if the message is being blocked, and reduces the remaining time if it is
             if(blockedMessages.TryGetValue(message, out blocked))
@@ -76,44 +83,28 @@
             // Makes sure the datapack has been set to something, even if one isn't provided
             args = args == null ? new object[0] : args;
 
-            // Temporary delegate container for modifying subscription delegates 
-            System.Action<object[]> cb;
 
-            // Check to see if the message has any valid subscriptions
             if (subscriptions.TryGetValue(message, out cb))
             {
-                // For all the Actions accociated with the message,
-                    // Check if they're still valid,
-                        // and remove them if they're not
-                System.Delegate[] dl = cb.GetInvocationList();
-                for(int i = 0; i < dl.Length; i++)
-                {                 
-                    System.Action<object[]> d = dl[i] as System.Action<object[]>;
-                    if(d.Target.Equals(null))
-                    {
-                        cb -= d;
-                    }
-                }
+                System.Delegate[] delegateList = cb.GetInvocationList();
 
-                // Set the subscriptions to the new list
-                subscriptions[message] = cb;
+                foreach (System.Action<object[]> d in delegateList)
+                    cb -= d.Target.Equals(null) ? d : null;
 
-                // Double check if null since some may have just been removed
-                if(cb != null)
+
+                if(cb == null)
                 {
+                    subscriptions.Remove(message);
+                }
+                
+                else
+                {
+                    subscriptions[message] = cb;
                     subscriptions[message].Invoke(args);
                     return 0;
                 }
-
-                // Clear out the subscriptons if they are now null
-                else
-                {
-                    subscriptions.Remove(message);
-                    return -2;
-                }
             }
             
-
             // If nothing is listening to the message, but it's been marked to hold
             else if(holdMessage && !heldMessages.Contains(message))
             {
@@ -126,8 +117,7 @@
 
 
 
-
-
+        /// ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ----------
         /// <summary>
         /// Disables the message without unsubscribing
         /// </summary>
@@ -163,6 +153,7 @@
 
 
 
+        /// ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ----------
         /// <summary>
         /// Unblocks a previously blocked message
         /// </summary>
@@ -182,12 +173,6 @@
             blockedMessages.Remove(message);
             return 0;
         }
-
-
-
-
-
-
 
 
 
@@ -242,6 +227,10 @@
                  new System.Collections.Generic.Dictionary<string, System.Action<object[]>>();
 
 
+
+
+
+            /// ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ----------
             /// <summary>
             /// Links a custom delegate to a message in a SPECIFIC subscription dictionary
             /// </summary>
@@ -273,6 +262,8 @@
             }
 
 
+
+            /// ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ----------
             /// <summary>
             /// Links a custom delegate to a message that may be breadcasted via a Publisher
             /// </summary>
@@ -294,6 +285,8 @@
             }
 
 
+
+            /// ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ----------
             /// <summary>
             /// Unlinks a custom delegate from a message in a SPECIFIC subscription dictionary
             /// </summary>
@@ -332,6 +325,8 @@
             }
 
 
+
+            /// ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ----------
             /// <summary>
             /// Unlinks a custom delegate from a message that may be breadcasted via a Publisher
             /// </summary>
@@ -360,11 +355,8 @@
             }
 
 
-            /// !!! IMPORTANT !!! ///
-            /// The method below - UnsubscribeAll()
-            /// MUST BE CALLED whenever a class using a subscriber is removed
-            /// If it is not, you WILL GET NULL REFERENCE ERRORS
 
+            /// ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ----------
             /// <summary>
             /// Unlinks all (local) delegates from every (local) broadcast message
             /// </summary>
