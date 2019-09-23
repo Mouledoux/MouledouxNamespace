@@ -62,7 +62,8 @@
         /// 
         /// <returns>
         /// 0 the message was broadcasted successfully
-        /// -1 the there were no current or unblocked subscribers to the message
+        /// -1 the message is blocked
+        /// -2 there are no active subscriptions
         /// </returns>
         public static int NotifySubscribers(string message, object[] args = null, bool holdMessage = false)
         {
@@ -111,7 +112,7 @@
                 heldMessages.Add(message);
             }
 
-            return -1;
+            return -2;
         }
 
 
