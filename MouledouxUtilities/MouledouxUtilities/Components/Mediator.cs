@@ -46,8 +46,34 @@
         new System.Collections.Generic.List<string>();
 
 
+        /// ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ----------
+        /// <summary>
+        /// Checks if a subscription message exist WITHOUT invoking it
+        /// </summary>
+        /// 
+        /// <param name="message">The message to be checked</param>
+        ///
+        /// <returns>
+        /// 0 the message exists and is active
+        /// -1 the message exist, but is blocked
+        /// -2 the message does not exist
+        /// </returns>
+        public static int CheckForSubscription(string message)
+        {
+            if(subscriptions.ContainsKey(message))
+            {
+                if(!blockedMessages.ContainsKey(message))
+                {
+                    return 0;
+                }
+                else
+                {
+                    return -1;
+                }
+            }
 
-
+            return -2;
+        }
 
 
         /// ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ----------
