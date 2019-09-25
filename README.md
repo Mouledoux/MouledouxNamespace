@@ -14,8 +14,7 @@ The Mouledoux namespace is a collection of classes and functions specifically ma
   - "Any" state
   - Transistion to/from states 
   - Invoke delegates on transistions (soon to be replaced with Mouledoux.Callback)
-  [depricated] Callback has been replaced with Action<object[]>
-- Callback
+- Callback [depricated] Callback has been replaced with Action<object[]>
   - Void delegate that takes object[] args
   - Packet [depricated]
 
