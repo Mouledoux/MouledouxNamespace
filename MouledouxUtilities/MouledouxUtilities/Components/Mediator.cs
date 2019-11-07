@@ -103,8 +103,10 @@
 
             // Checks if the message is being blocked, and reduces the remaining time if it is
             if(blockedMessages.TryGetValue(message, out blocked))
+            {
                 if (blocked.blockTime < 0 || --blocked.blockTime > 0) return -1;
                 else UnblockMessage(message);
+            }
 
             // Makes sure the datapack has been set to something, even if one isn't provided
             args = args == null ? new object[0] : args;
