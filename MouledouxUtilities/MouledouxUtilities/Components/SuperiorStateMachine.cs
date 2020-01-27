@@ -4,6 +4,8 @@
     {
         private bool initialized = false;
         
+        private T _anyState;
+        
         private T _currentState;
         public T currentState
         {
@@ -28,6 +30,14 @@
         private System.Collections.Generic.List<Transition> availableTransitions =
             new System.Collections.Generic.List<Transition>();
 
+        
+        
+        public SuperiorStateMachine(T initState, T anyState)
+        {
+            _currentState = initstate;
+            _anyState = anyState;
+        }
+        
 
         public void ProcessTransitions()
         {
@@ -108,7 +118,7 @@
             public int experience;
             public int experienceToNextLevel;
 
-            SuperiorStateMachine<string> playerFSM = new SuperiorStateMachine<string>();
+            SuperiorStateMachine<string> playerFSM = new SuperiorStateMachine<string>("idle", "any");
 
 
 
