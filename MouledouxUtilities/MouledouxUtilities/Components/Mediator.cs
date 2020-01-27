@@ -5,28 +5,6 @@
     /// </summary>
     public sealed class Mediator
     {
-        /// The below code is a standard singleton
-        #region Singleton
-        // private Mediator() { }
-
-        // private static Mediator _instance;
-
-        // public static Mediator instance
-        // {
-        //     get
-        //     {
-        //         if (_instance == null)
-        //         {
-        //             _instance = new Mediator();
-        //         }
-                
-        //         return _instance;
-        //     }
-        // }
-        #endregion Singleton
-
-
-
         /// <summary>
         /// Dictionary of subscription strings and associated delegate callbacks
         /// </summary>
