@@ -12,15 +12,9 @@
             new System.Collections.Generic.Dictionary<string, System.Action<object[]>>();
 
         /// <summary>
-        /// Dictionary of blocked messages, and their expiration time
+        /// List of messages held to be re-broadcated once something is subscribed to it
         /// </summary>
-        private static System.Collections.Generic.Dictionary<string, BlockedMessage> blockedMessages =
-            new System.Collections.Generic.Dictionary<string, BlockedMessage>();
-
-        /// <summary>
-        /// Dictionary of messages held to be re-broadcated once something is subscribed to it
-        /// </summary>
-        private static System.Collections.Generic.List<string> heldMessages = 
+        private static System.Collections.Generic.List<string> holdMessages = 
         new System.Collections.Generic.List<string>();
 
 
@@ -32,25 +26,11 @@
         /// <param name="message">The message to be checked</param>
         ///
         /// <returns>
-        /// 0 the message exists and is active
-        /// -1 the message exist, but is blocked
-        /// -2 the message does not exist
+        /// Ture/ False if the message exist
         /// </returns>
-        public static int CheckForSubscription(string message)
+        public static bool CheckForSubscription(string message)
         {
-            if(subscriptions.ContainsKey(message))
-            {
-                if(!blockedMessages.ContainsKey(message))
-                {
-                    return 0;
-                }
-                else
-                {
-                    return -1;
-                }
-            }
-
-            return -2;
+            return subscriptions.ContainsKey(message);
         }
 
 
@@ -65,39 +45,27 @@
         /// <param name="holdMessage">Should this message be held if there are no active subscriptions</param>   
         /// 
         /// <returns>
-        /// 0 the message was broadcasted successfully
-        /// -1 the message is blocked
-        /// -2 there are no active subscriptions
+        /// 1 the message was broadcasted successfully
+        /// 0 there are no active subscriptions
         /// </returns>
         public static int NotifySubscribers(string message, object[] args = null, bool holdMessage = false)
         {
             message = message.ToLower();
-
-            // Temporary BlockedMessage for checking blacklist
-            BlockedMessage blocked;
+            
             // Temporary delegate container for modifying subscription delegates 
             System.Action<object[]> cb;
 
-
-            // Checks if the message is being blocked, and reduces the remaining time if it is
-            if(blockedMessages.TryGetValue(message, out blocked))
-            {
-                if (blocked.blockTime < 0 || --blocked.blockTime > 0) return -1;
-                else UnblockMessage(message);
-            }
-
             // Makes sure the datapack has been set to something, even if one isn't provided
             args = args == null ? new object[0] : args;
-
 
             if (subscriptions.TryGetValue(message, out cb))
             {
                 System.Delegate[] delegateList = cb.GetInvocationList();
 
                 foreach (System.Action<object[]> d in delegateList)
+                {
                     cb -= d.Target.Equals(null) ? d : null;
-
-
+                }
 
                 if(cb == null)
                 {
@@ -108,115 +76,19 @@
                 {
                     subscriptions[message] = cb;
                     subscriptions[message].Invoke(args);
-                    return 0;
+                    return 1;
                 }
             }
             
             // If nothing is listening to the message, but it's been marked to hold
-            else if(holdMessage && !heldMessages.Contains(message))
+            else if(holdMessage && !holdMessages.Contains(message))
             {
-                // add it to the held list
-                heldMessages.Add(message);
+                // add it to the hold list
+                holdMessages.Add(message);
             }
 
-            return -2;
-        }
-
-
-
-        /// ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ----------
-        /// <summary>
-        /// Disables the message without unsubscribing
-        /// </summary>
-        /// 
-        /// <param name="message">Message to be blocked</param>
-        /// <param name="blockTime">How many times the message will be blocked before the block expires</param>
-        /// <param name="additive">If the blockTime passed should be added to the remaining time, or replace the remaining time, if the message is already blocked</param>
-        /// 
-        /// <returns>
-        /// 0 the message has been blocked
-        /// 1 the message is already blocked
-        /// </returns>
-        public static int BlockMessage(string message, int blockTime, bool additive = false)
-        {
-            message = message.ToLower();
-
-            if (blockedMessages.ContainsKey(message))
-            {
-                blockTime += additive ? blockedMessages[message].blockTime : 0;
-
-                blockedMessages.Remove(message);
-                BlockMessage(message, blockTime);
-
-                return 1;
-            }
-
-            else
-            {
-                blockedMessages.Add(message, new BlockedMessage(message, blockTime));
-                return 0;
-            }
-        }
-
-
-
-        /// ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ----------
-        /// <summary>
-        /// Unblocks a previously blocked message
-        /// </summary>
-        /// 
-        /// <param name="message">Message to be unblocked</param>
-        /// 
-        /// <returns>
-        /// 0 message was unblocked
-        /// -1 message was not blocked to begin
-        /// </returns>
-        public static int UnblockMessage(string message)
-        {
-            message = message.ToLower();
-
-            if (!blockedMessages.ContainsKey(message)) return -1;
-            
-            blockedMessages.Remove(message);
             return 0;
         }
-
-
-
-        /// ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ----------
-        /// <summary>
-        /// Struct for storing a blocked message, and expiration time
-        /// </summary>
-        private struct BlockedMessage
-        {
-            /// <summary>
-            /// Constructor for blocked messages
-            /// </summary>
-            /// <param name="aMessage">Message to be blocked</param>
-            /// <param name="aBlockTime">How many broadcast attempty will be blocked. Set to -1 for infinity</param>
-            public BlockedMessage(string aMessage, int aBlockTime)
-            {
-                message = aMessage.ToLower();
-                blockTime = aBlockTime;
-            }
-
-
-            /// <summary>
-            /// Message to be blocked
-            /// </summary>
-            public string message;
-
-            /// <summary>
-            /// How many times the message will be rejected before the block expires
-            /// Less than 0 requires manual unblocking
-            /// </summary>
-            public int blockTime;
-        }
-
-
-
-
-
 
 
 

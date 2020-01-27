@@ -57,6 +57,7 @@
         }
 
 
+
         private sealed class Transition
         {
             private T aState;
