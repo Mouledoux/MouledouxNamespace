@@ -8,12 +8,12 @@ The Mouledoux namespace is a collection of classes and functions specifically ma
   - Subscribe to, and broadcast string messages
   - Invoke delegates with an array of object arguments
   - Invoke delegates with NO arguments (quick broadcast)
-~~- Finite State Machine (**under reconstruction**)
-  - Add/remove arbitrary states
-  ~~- Add/remove transitions
-  - "Any" state
-  ~~- Transition to/from states 
-  - Invoke delegates on transitions (soon to be replaced with Mouledoux.Callback)
+- ~~Finite State Machine (**under reconstruction**)~~
+  - ~~Add/remove arbitrary states~~
+  - ~~Add/remove transitions~~
+  - ~~"Any" state~~
+  - ~~Transition to/from states ~~
+  - ~~Invoke delegates on transitions (soon to be replaced with Mouledoux.Callback)~~
 - **NEW** Superior State Machine
   - Only tracks current state
   - NO MANUAL STATE CHANGES
