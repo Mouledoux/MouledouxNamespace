@@ -1,5 +1,6 @@
 ﻿namespace Mouledoux.Components
 {
+    [System.Obsolete("FSM has been depricated and is due to be deleted. Use Superior State Machine instead")]
     public class FiniteStateMachine<T>
     {
         /// <summary>

@@ -1,8 +1,5 @@
 ﻿namespace Mouledoux.Component
 {
-
-
-
     public sealed class SuperiorStateMachine<T>
     {
         private T _currentState;
