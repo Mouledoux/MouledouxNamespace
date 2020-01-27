@@ -231,4 +231,166 @@
             new System.Collections.Generic.Dictionary<string, System.Delegate>();
         #endregion
     }
+
+
+
+
+    public sealed class SuperiorStateMachine<T>
+    {
+        private T _currentState;
+        public T currentState
+        {
+            public get { return _currentState; }
+
+            private set
+            {
+                _currentState = value;
+                availableTransistions.Clear();
+
+                foreach (Transistion t in allTransitions.Keys)
+                {
+                    if (value.Equals(t.GetAState()))
+                        availableTransistions.Add(t);
+                }
+            }
+        }
+
+        private System.Collections.Generic.Dictionary<Transistion, System.Action> allTransitions =
+            new System.Collections.Generic.Dictionary<Transistion, System.Action>();
+
+        private System.Collections.Generic.List<Transistion> availableTransistions =
+            new System.Collections.Generic.List<Transistion>();
+
+
+        public void ProcessTransistions()
+        {
+            foreach (Transistion t in availableTransistions)
+            {
+                if (t.CheckPreRequisits())
+                {
+                    allTransitions[t].Invoke();
+                    currentState = t.GetBState();
+                    return;
+                }
+            }
+        }
+
+
+        public void AddTransistion(T _aState, T _bState, System.Func<bool>[] _preReqs, System.Action _onTransistion)
+        {
+            Transistion transistion = new Transistion(_aState, _bState, _preReqs);
+            AddTransistion(transistion, _onTransistion);
+        }
+
+        private int AddTransistion(Transistion _newTransistion, System.Action _onTransistion)
+        {
+            allTransitions.Add(_newTransistion, _onTransistion);
+            return 0;
+        }
+
+
+        private sealed class Transistion
+        {
+            private T aState;
+            public T GetAState()
+            {
+                return aState;
+            }
+
+            private T bState;
+            public T GetBState()
+            {
+                return bState;
+            }
+
+            private System.Func<bool>[] preReqs;
+
+            public Transistion(T _aState, T _bState, System.Func<bool>[] _preReqs)
+            {
+                aState = _aState;
+                bState = _bState;
+
+                preReqs = _preReqs;
+            }
+
+            public bool CheckPreRequisits()
+            {
+                bool passPreReqs = true;
+
+                foreach (System.Func<bool> pr in preReqs)
+                {
+                    passPreReqs = passPreReqs & pr.Invoke();
+                }
+                return passPreReqs;
+            }
+        }
+
+
+
+        /* Example Usage
+
+        public class PlayerClass
+        {
+            public int health;
+            public int mana;
+            public int experience;
+            public int experienceToNextLevel;
+
+            SuperiorStateMachine<string> playerFSM = new SuperiorStateMachine<string>();
+
+
+
+            public bool IsAlive()
+            {
+                return health > 0;
+            }
+            public bool CanLevelUp()
+            {
+                return experience >= experienceToNextLevel;
+            }
+
+            private void KillPlayer()
+            {
+                // do something
+            }
+            private void LevelUp()
+            {
+                health += 10;
+                mana += 15;
+                experience = 0;
+                experienceToNextLevel += (int)((float)experienceToNextLevel * 0.2f);
+            }
+
+            public void Initialize()
+            {
+                playerFSM.AddTransistion("idle", "levelUp",
+                new System.Func<bool>[]
+                {
+                        IsAlive,        // Since both of these return true when we need them to,
+                        CanLevelUp,     // They can just be passed as a method group
+                },
+                () => LevelUp());
+
+
+                playerFSM.AddTransistion("idle", "dead",
+                new System.Func<bool>[]
+                {
+                        new System.Func<bool>(() => !IsAlive()),    // But if we WANT them to be false,
+                                                                    // they need to be made into a new method group
+                },
+                () => KillPlayer());
+
+
+                playerFSM.AddTransistion("levelUp", "idle",
+                new System.Func<bool>[]
+                {
+                    // A transistion doesnt have to have requirements,
+                    // but it will make the reansistion immeadetly
+                },
+                null);  // They also dont have to do anything when the transistion occurs                                          
+            }
+        }
+        */
+
+    }
 }
