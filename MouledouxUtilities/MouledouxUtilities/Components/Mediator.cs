@@ -156,9 +156,9 @@
                 Subscribe(ref Mediator.subscriptions, message, callback);
 
 
-                if(acceptStaleMessages && Mediator.heldMessages.Contains(message))
+                if(acceptStaleMessages && Mediator.holdMessages.Contains(message))
                 {
-                    Mediator.heldMessages.Remove(message);
+                    Mediator.holdMessages.Remove(message);
                     callback.Invoke(null);
                 }
             }
