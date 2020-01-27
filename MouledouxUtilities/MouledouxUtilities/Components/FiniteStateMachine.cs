@@ -245,26 +245,26 @@
             private set
             {
                 _currentState = value;
-                availableTransistions.Clear();
+                availableTransitions.Clear();
 
-                foreach (Transistion t in allTransitions.Keys)
+                foreach (Transition t in allTransitions.Keys)
                 {
                     if (value.Equals(t.GetAState()))
-                        availableTransistions.Add(t);
+                        availableTransitions.Add(t);
                 }
             }
         }
 
-        private System.Collections.Generic.Dictionary<Transistion, System.Action> allTransitions =
-            new System.Collections.Generic.Dictionary<Transistion, System.Action>();
+        private System.Collections.Generic.Dictionary<Transition, System.Action> allTransitions =
+            new System.Collections.Generic.Dictionary<Transition, System.Action>();
 
-        private System.Collections.Generic.List<Transistion> availableTransistions =
-            new System.Collections.Generic.List<Transistion>();
+        private System.Collections.Generic.List<Transition> availableTransitions =
+            new System.Collections.Generic.List<Transition>();
 
 
-        public void ProcessTransistions()
+        public void ProcessTransitions()
         {
-            foreach (Transistion t in availableTransistions)
+            foreach (Transition t in availableTransitions)
             {
                 if (t.CheckPreRequisits())
                 {
@@ -276,20 +276,20 @@
         }
 
 
-        public void AddTransistion(T _aState, T _bState, System.Func<bool>[] _preReqs, System.Action _onTransistion)
+        public void AddTransition(T _aState, T _bState, System.Func<bool>[] _preReqs, System.Action _onTransition)
         {
-            Transistion transistion = new Transistion(_aState, _bState, _preReqs);
-            AddTransistion(transistion, _onTransistion);
+            Transition Transition = new Transition(_aState, _bState, _preReqs);
+            AddTransition(Transition, _onTransition);
         }
 
-        private int AddTransistion(Transistion _newTransistion, System.Action _onTransistion)
+        private int AddTransition(Transition _newTransition, System.Action _onTransition)
         {
-            allTransitions.Add(_newTransistion, _onTransistion);
+            allTransitions.Add(_newTransition, _onTransition);
             return 0;
         }
 
 
-        private sealed class Transistion
+        private sealed class Transition
         {
             private T aState;
             public T GetAState()
@@ -305,7 +305,7 @@
 
             private System.Func<bool>[] preReqs;
 
-            public Transistion(T _aState, T _bState, System.Func<bool>[] _preReqs)
+            public Transition(T _aState, T _bState, System.Func<bool>[] _preReqs)
             {
                 aState = _aState;
                 bState = _bState;
@@ -363,7 +363,7 @@
 
             public void Initialize()
             {
-                playerFSM.AddTransistion("idle", "levelUp",
+                playerFSM.AddTransition("idle", "levelUp",
                 new System.Func<bool>[]
                 {
                         IsAlive,        // Since both of these return true when we need them to,
@@ -372,7 +372,7 @@
                 () => LevelUp());
 
 
-                playerFSM.AddTransistion("idle", "dead",
+                playerFSM.AddTransition("idle", "dead",
                 new System.Func<bool>[]
                 {
                         new System.Func<bool>(() => !IsAlive()),    // But if we WANT them to be false,
@@ -381,13 +381,13 @@
                 () => KillPlayer());
 
 
-                playerFSM.AddTransistion("levelUp", "idle",
+                playerFSM.AddTransition("levelUp", "idle",
                 new System.Func<bool>[]
                 {
-                    // A transistion doesnt have to have requirements,
+                    // A Transition doesnt have to have requirements,
                     // but it will make the reansistion immeadetly
                 },
-                null);  // They also dont have to do anything when the transistion occurs                                          
+                null);  // They also dont have to do anything when the Transition occurs                                          
             }
         }
         */
