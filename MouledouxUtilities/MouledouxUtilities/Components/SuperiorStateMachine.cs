@@ -93,9 +93,7 @@
 
 
 
-        /* Example Usage
-         *
-        public class PlayerClass
+        private sealed class EXAMPLE_PlayerClass
         {
             public int health;
             public int mana;
@@ -155,6 +153,6 @@
                 },
                 null);  // They also dont have to do anything when the Transition occurs                                          
             }
-        } */
+        }
     }
 }
