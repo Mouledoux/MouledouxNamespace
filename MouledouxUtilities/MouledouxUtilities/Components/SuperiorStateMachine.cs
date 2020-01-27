@@ -2,6 +2,8 @@
 {
     public sealed class SuperiorStateMachine<T>
     {
+        private bool initialized = false;
+        
         private T _currentState;
         public T currentState
         {
@@ -29,6 +31,12 @@
 
         public void ProcessTransitions()
         {
+            if(!initialized)
+            {
+                currentState = currentState;
+                initialized = true;
+            }
+            
             foreach (Transition t in availableTransitions)
             {
                 if (t.CheckPreRequisits())
