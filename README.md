@@ -12,7 +12,7 @@ The Mouledoux namespace is a collection of classes and functions specifically ma
   - ~~Add/remove arbitrary states~~
   - ~~Add/remove transitions~~
   - ~~"Any" state~~
-  - ~~Transition to/from states ~~
+  - ~~Transition to/from states~~
   - ~~Invoke delegates on transitions (soon to be replaced with Mouledoux.Callback)~~
 - **NEW** Superior State Machine
   - Only tracks current state
