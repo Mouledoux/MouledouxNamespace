@@ -130,13 +130,13 @@
             {
                 System.Func<bool>[] canLeaveHome =
                 {
-                    //() => !BoardManager.GetTile(BoardManager.GhostDoorPosX, BoardManager.GhostDoorPosY).isOccupied,
-                    //GameManager.CheckNextGhostAtHome(this),
+                    //() => !BoardManager.GetTile(BoardManager.GhostDoorPosX, BoardManager.GhostDoorPosY).isOccupied;
+                    //GameManager.CheckNextGhostAtHome(this);
                 };
                 System.Func<bool>[] readyToChase =
                 {
-                    //() => currentPosX == BoardManager.GhostDoorPosX,
-                    //() => currentPosY == BoardManager.GhostDoorPosY,
+                    //() => currentPosX == BoardManager.GhostDoorPosX;
+                    //() => currentPosY == BoardManager.GhostDoorPosY;
                 };
                 System.Func<bool>[] shouldFlee =
                 {
