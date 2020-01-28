@@ -39,7 +39,7 @@
         }
         
 
-        public void ProcessTransitions()
+        public void Update()
         {
             if(!initialized)
             {
@@ -113,7 +113,110 @@
 
         private sealed class EXAMPLE_PacManGhost
         {
+            SuperiorStateMachine<GhostStates> stateMachine =
+                new SuperiorStateMachine<GhostStates>(GhostStates.INIT, GhostStates.ANY);
 
+            int currentPosX;
+            int currentPosY;
+
+            int targetPosX;
+            int targetPosY;
+
+            float movementSpeed;
+
+
+
+            public void InitializeGhost()
+            {
+                System.Func<bool>[] canLeaveHome =
+                {
+                    //() => !BoardManager.GetTile(BoardManager.GhostDoorPosX, BoardManager.GhostDoorPosY).isOccupied,
+                    //() => GameManager.CheckNextGhostAtHome(this),
+                };
+                System.Func<bool>[] readyToChase =
+                {
+                    //() => currentPosX == BoardManager.GhostDoorPosX,
+                    //() => currentPosY == BoardManager.GhostDoorPosY,
+                };
+                System.Func<bool>[] shouldFlee =
+                {
+                    //() => GameManager.GetState() == GameState.POWER_PILL,
+                    //() => !SetTargetTile(GameManager.PacMan.posX, GameManager.PacMan.posY),
+                };
+                System.Func<bool>[] isDead =
+                {
+                    //() => GameManager.GetState() == GameState.POWER_PILL,
+                    //() => (GameManager.PacMan.posX == currentPosX && GameManager.PacMan.posY == currentPosY,
+                };
+
+                System.Action leaveHome = () =>
+                {
+                    //() => SetColor(Color.default),
+                    //() => SetTargetTile(BoardManager.GhostDoorPosX, BoardManager.GhostDoorPosY),
+                    //() => GameManager.RemoveGhostFromHome(this),
+                };
+                System.Action flee = () =>
+                {
+                    //() => ChangeColor(blue),
+                    //() => SetSpeed(2f),
+                };
+                System.Action die = () =>
+                {
+                    //() => SetColor(Color.blue),
+                    //() => SetTargetTile(BoardManager.GhostHomePosX, BoardManager.GhostHomePosY),
+                    //() => GamemManager.AddGhostToHome(this),
+                };
+
+                stateMachine.AddTransition(GhostStates.INIT, GhostStates.AT_HOME, null, null);
+                stateMachine.AddTransition(GhostStates.AT_HOME, GhostStates.LEAVING_HOME, canLeaveHome, leaveHome);
+                stateMachine.AddTransition(GhostStates.LEAVING_HOME, GhostStates.CHASING, readyToChase, () => SetSpeed(4f));
+                stateMachine.AddTransition(GhostStates.CHASING, GhostStates.FLEEING, shouldFlee, flee);
+                stateMachine.AddTransition(GhostStates.FLEEING, GhostStates.CHASING, new System.Func<bool>[] { /*() => GameManager.GetState() == GameState.NORMAL,*/ }, () => SetSpeed(4f));
+                stateMachine.AddTransition(GhostStates.FLEEING, GhostStates.DEAD, isDead, die);
+                stateMachine.AddTransition(GhostStates.DEAD, GhostStates.LEAVING_HOME, canLeaveHome, leaveHome);
+
+                stateMachine.AddTransition(GhostStates.ANY, GhostStates.RESET, new System.Func<bool>[] { /*() => GameManager.GetState() == GameState.LEVEL_END,*/ }, null);
+                stateMachine.AddTransition(GhostStates.RESET, GhostStates.INIT, new System.Func<bool>[] { /*() => GameManager.GetState() == GameState.LEVEL_START,*/ }, null);
+            }
+            
+
+            void UpdateGhost()
+            {
+                stateMachine.Update();
+                MoveToTargetPosition();
+            }
+
+              
+            void MoveToTargetPosition()
+            {
+                // Move to targetPosX and targetPosY
+            }
+            
+
+            bool SetTargetTile(int x, int y)
+            {
+                targetPosX = x;
+                targetPosY = y;
+
+                return currentPosX == targetPosX && currentPosY == targetPosY;
+            }
+            
+            void SetSpeed(float newSpeed)
+            {
+                movementSpeed = newSpeed; 
+            }
+
+            public enum GhostStates
+            {
+                ANY,
+                INIT,
+                AT_HOME,
+                LEAVING_HOME,
+                CHASING,
+                FLEEING,
+                DEAD,
+                RESET,
+            }
         }
     }
 }
