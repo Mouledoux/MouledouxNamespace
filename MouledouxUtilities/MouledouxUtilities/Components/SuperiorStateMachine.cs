@@ -9,7 +9,7 @@
         private T _currentState;
         public T currentState
         {
-            public get { return _currentState; }
+            get { return _currentState; }
 
             private set
             {
@@ -34,7 +34,7 @@
         
         public SuperiorStateMachine(T initState, T anyState)
         {
-            _currentState = initstate;
+            _currentState = initState;
             _anyState = anyState;
         }
         
@@ -111,66 +111,9 @@
 
 
 
-        private sealed class EXAMPLE_PlayerClass
+        private sealed class EXAMPLE_PacManGhost
         {
-            public int health;
-            public int mana;
-            public int experience;
-            public int experienceToNextLevel;
 
-            SuperiorStateMachine<string> playerFSM = new SuperiorStateMachine<string>("idle", "any");
-
-
-
-            public bool IsAlive()
-            {
-                return health > 0;
-            }
-            public bool CanLevelUp()
-            {
-                return experience >= experienceToNextLevel;
-            }
-
-            private void KillPlayer()
-            {
-                // do something
-            }
-            private void LevelUp()
-            {
-                health += 10;
-                mana += 15;
-                experience = 0;
-                experienceToNextLevel += (int)((float)experienceToNextLevel * 0.2f);
-            }
-
-            public void Initialize()
-            {
-                playerFSM.AddTransition("idle", "levelUp",
-                new System.Func<bool>[]
-                {
-                        IsAlive,        // Since both of these return true when we need them to,
-                        CanLevelUp,     // They can just be passed as a method group
-                },
-                () => LevelUp());
-
-
-                playerFSM.AddTransition("idle", "dead",
-                new System.Func<bool>[]
-                {
-                        new System.Func<bool>(() => !IsAlive()),    // But if we WANT them to be false,
-                                                                    // they need to be made into a new method group
-                },
-                () => KillPlayer());
-
-
-                playerFSM.AddTransition("levelUp", "idle",
-                new System.Func<bool>[]
-                {
-                    // A Transition doesnt have to have requirements,
-                    // but it will make the reansistion immeadetly
-                },
-                null);  // They also dont have to do anything when the Transition occurs                                          
-            }
         }
     }
 }
