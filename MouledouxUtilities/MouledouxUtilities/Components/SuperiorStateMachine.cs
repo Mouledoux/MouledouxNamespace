@@ -46,7 +46,7 @@
             if(!initialized) Initialize();
             
             Transition transition;
-            if(CheckAvailableTransitions(out transition))
+            if(CheckAvailableForTransition(out transition))
             {   
                 MakeTransition(transition);
                 return;
@@ -78,7 +78,7 @@
             allTransitions[transition].Invoke();
         }
 
-        private bool CheckAvailableTransitions(out Transition validTransition)
+        private bool CheckForAvailableTransition(out Transition validTransition)
         {
             foreach (Transition transition in availableTransitions)
             {
