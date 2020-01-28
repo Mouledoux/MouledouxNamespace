@@ -131,7 +131,7 @@
                 System.Func<bool>[] canLeaveHome =
                 {
                     //() => !BoardManager.GetTile(BoardManager.GhostDoorPosX, BoardManager.GhostDoorPosY).isOccupied,
-                    //() => GameManager.CheckNextGhostAtHome(this),
+                    //GameManager.CheckNextGhostAtHome(this),
                 };
                 System.Func<bool>[] readyToChase =
                 {
@@ -140,31 +140,31 @@
                 };
                 System.Func<bool>[] shouldFlee =
                 {
-                    //() => GameManager.GetState() == GameState.POWER_PILL,
-                    //() => !SetTargetTile(GameManager.PacMan.posX, GameManager.PacMan.posY),
+                    //() => GameManager.GetState() == GameState.POWER_PILL;
+                    //() => !SetTargetTile(GameManager.PacMan.posX, GameManager.PacMan.posY);
                 };
                 System.Func<bool>[] isDead =
                 {
-                    //() => GameManager.GetState() == GameState.POWER_PILL,
-                    //() => (GameManager.PacMan.posX == currentPosX && GameManager.PacMan.posY == currentPosY,
+                    //() => GameManager.GetState() == GameState.POWER_PILL;
+                    //() => (GameManager.PacMan.posX == currentPosX && GameManager.PacMan.posY == currentPosY;
                 };
 
                 System.Action leaveHome = () =>
                 {
-                    //() => SetColor(Color.default),
-                    //() => SetTargetTile(BoardManager.GhostDoorPosX, BoardManager.GhostDoorPosY),
-                    //() => GameManager.RemoveGhostFromHome(this),
+                    //SetColor(Color.default);
+                    //SetTargetTile(BoardManager.GhostDoorPosX, BoardManager.GhostDoorPosY);
+                    //GameManager.RemoveGhostFromHome(this);
                 };
                 System.Action flee = () =>
                 {
-                    //() => ChangeColor(blue),
-                    //() => SetSpeed(2f),
+                    //ChangeColor(blue);
+                    SetSpeed(2f);
                 };
                 System.Action die = () =>
                 {
-                    //() => SetColor(Color.blue),
-                    //() => SetTargetTile(BoardManager.GhostHomePosX, BoardManager.GhostHomePosY),
-                    //() => GamemManager.AddGhostToHome(this),
+                    //SetColor(Color.blue);
+                    //SetTargetTile(BoardManager.GhostHomePosX, BoardManager.GhostHomePosY);
+                    //GamemManager.AddGhostToHome(this);
                 };
 
                 stateMachine.AddTransition(GhostStates.INIT, GhostStates.AT_HOME, null, null);
