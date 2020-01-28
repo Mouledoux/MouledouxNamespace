@@ -155,23 +155,28 @@
                     //SetTargetTile(BoardManager.GhostDoorPosX, BoardManager.GhostDoorPosY);
                     //GameManager.RemoveGhostFromHome(this);
                 };
+                System.Action chase = () =>
+                {
+                    //SetColor(Color.default);
+                    SetSpeed(4f);
+                };
                 System.Action flee = () =>
                 {
-                    //ChangeColor(blue);
+                    //SetColor(Color.blue);
                     SetSpeed(2f);
                 };
                 System.Action die = () =>
                 {
-                    //SetColor(Color.blue);
+                    //SetColor(Color.clear);
                     //SetTargetTile(BoardManager.GhostHomePosX, BoardManager.GhostHomePosY);
                     //GamemManager.AddGhostToHome(this);
                 };
 
                 stateMachine.AddTransition(GhostStates.INIT, GhostStates.AT_HOME, null, null);
                 stateMachine.AddTransition(GhostStates.AT_HOME, GhostStates.LEAVING_HOME, canLeaveHome, leaveHome);
-                stateMachine.AddTransition(GhostStates.LEAVING_HOME, GhostStates.CHASING, readyToChase, () => SetSpeed(4f));
+                stateMachine.AddTransition(GhostStates.LEAVING_HOME, GhostStates.CHASING, readyToChase, chase);
                 stateMachine.AddTransition(GhostStates.CHASING, GhostStates.FLEEING, shouldFlee, flee);
-                stateMachine.AddTransition(GhostStates.FLEEING, GhostStates.CHASING, new System.Func<bool>[] { /*() => GameManager.GetState() == GameState.NORMAL,*/ }, () => SetSpeed(4f));
+                stateMachine.AddTransition(GhostStates.FLEEING, GhostStates.CHASING, new System.Func<bool>[] { /*() => GameManager.GetState() == GameState.NORMAL,*/ }, chase);
                 stateMachine.AddTransition(GhostStates.FLEEING, GhostStates.DEAD, isDead, die);
                 stateMachine.AddTransition(GhostStates.DEAD, GhostStates.LEAVING_HOME, canLeaveHome, leaveHome);
 
