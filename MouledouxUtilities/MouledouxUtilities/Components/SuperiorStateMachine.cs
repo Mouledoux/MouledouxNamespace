@@ -111,6 +111,9 @@
 
 
 
+
+        // EXAMPLE // PacMan Ghost ---------- ---------- ---------- ---------- ----------
+        //  ---------- ---------- ---------- ---------- ---------- ---------- ---------- ----------
         private sealed class EXAMPLE_PacManGhost
         {
             SuperiorStateMachine<GhostStates> stateMachine =
