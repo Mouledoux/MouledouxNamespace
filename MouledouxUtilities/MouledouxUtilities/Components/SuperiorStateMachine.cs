@@ -49,7 +49,7 @@
             
             foreach (Transition t in availableTransitions)
             {
-                if (t.CheckPrerequisits())
+                if (t.CheckPrerequisites())
                 {
                     currentState = t.GetBState();
                     allTransitions[t].Invoke();
@@ -97,7 +97,7 @@
                 preReqs = _preReqs;
             }
 
-            public bool CheckPrerequisits()
+            public bool CheckPrerequisites()
             {
                 bool passPreReqs = true;
 
