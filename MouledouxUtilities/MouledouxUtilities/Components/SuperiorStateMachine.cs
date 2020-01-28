@@ -1,4 +1,4 @@
-﻿namespace Mouledoux.Component
+﻿namespace Mouledoux.Components
 {
     public sealed class SuperiorStateMachine<T>
     {
