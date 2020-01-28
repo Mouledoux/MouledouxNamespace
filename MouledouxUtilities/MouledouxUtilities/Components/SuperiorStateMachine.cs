@@ -18,7 +18,7 @@
 
                 foreach (Transition t in allTransitions.Keys)
                 {
-                    if (value.Equals(t.GetAState()))
+                    if (value.Equals(t.GetAState() || t.GetAState().Equals(_anyState)))
                         availableTransitions.Add(t);
                 }
             }
