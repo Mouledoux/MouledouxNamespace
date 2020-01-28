@@ -52,7 +52,7 @@
                 if (t.CheckPrerequisites())
                 {
                     currentState = t.GetBState();
-                    allTransitions[t]?.Invoke();
+                    allTransitions[t].Invoke();
                     return;
                 }
             }
