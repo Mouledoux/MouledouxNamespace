@@ -40,26 +40,26 @@
             _anyState = anyState;
         }
         
-
+        
         public void Update()
         {
-            if(!initialized)
-            {
-                SetCurrentState(_currentState);
-                initialized = true;
-            }
+            if(!initialized) Initialize();
             
-            foreach (Transition t in availableTransitions)
-            {
-                if (t.CheckPrerequisites())
-                {
-                    SetCurrentState(t.GetBState());
-                    allTransitions[t].Invoke();
-                    return;
-                }
+            Transition transition;
+            if(CheckAvailableTransitions(out transition))
+            {   
+                MakeTransition(transition);
+                return;
             }
         }
-
+        
+        
+        
+        private void Initialize()
+        {
+            SetCurrentState(_currentState);
+            initialized = true;
+        }
 
         public void AddTransition(T _aState, T _bState, System.Func<bool>[] _preReqs, System.Action _onTransition)
         {
@@ -67,11 +67,32 @@
             AddTransition(Transition, _onTransition);
         }
 
-        private int AddTransition(Transition _newTransition, System.Action _onTransition)
+        private void AddTransition(Transition _newTransition, System.Action _onTransition)
         {
             allTransitions.Add(_newTransition, _onTransition);
-            return 0;
         }
+
+        private void MakeTransition(Transition transition)
+        {
+            SetCurrentState(transition.GetBState());
+            allTransitions[transition].Invoke();
+        }
+
+        private bool CheckAvailableTransitions(out Transition validTransition)
+        {
+            foreach (Transition transition in availableTransitions)
+            {
+                if (transition.CheckPrerequisites())
+                {
+                    validTransition = transition
+                    return true;
+                }
+            }
+            
+            validTransition = null;
+            return false;
+        }
+
 
 
         //  ---------- ---------- ---------- ---------- ---------- ---------- ---------- ----------
