@@ -7,22 +7,24 @@
         private T _anyState;
         
         private T _currentState;
-        public T currentState
+        public T GetCurrentState()
         {
-            get { return _currentState; }
+            return _currentState;
+        }
+        private void SetCurrentState(T newState)
+        {
+            _currentState = newState;
+            availableTransitions.Clear();
 
-            private set
+            foreach (Transition t in allTransitions.Keys)
             {
-                _currentState = value;
-                availableTransitions.Clear();
-
-                foreach (Transition t in allTransitions.Keys)
+                if (value.Equals(t.GetAState() || t.GetAState().Equals(_anyState)))
                 {
-                    if (value.Equals(t.GetAState() || t.GetAState().Equals(_anyState)))
-                        availableTransitions.Add(t);
+                    availableTransitions.Add(t);
                 }
             }
         }
+
 
         private System.Collections.Generic.Dictionary<Transition, System.Action> allTransitions =
             new System.Collections.Generic.Dictionary<Transition, System.Action>();
@@ -43,7 +45,7 @@
         {
             if(!initialized)
             {
-                currentState = currentState;
+                SetCurrentState(_currentState);
                 initialized = true;
             }
             
@@ -51,7 +53,7 @@
             {
                 if (t.CheckPrerequisites())
                 {
-                    currentState = t.GetBState();
+                    SetCurrentState(t.GetBState());
                     allTransitions[t].Invoke();
                     return;
                 }
@@ -72,7 +74,7 @@
         }
 
 
-
+        //  ---------- ---------- ---------- ---------- ---------- ---------- ---------- ----------
         private sealed class Transition
         {
             private T aState;
