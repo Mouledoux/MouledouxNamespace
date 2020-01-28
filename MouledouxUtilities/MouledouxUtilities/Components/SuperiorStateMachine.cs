@@ -34,12 +34,18 @@
 
         
         
+        
         public SuperiorStateMachine(T initState, T anyState)
         {
             _currentState = initState;
             _anyState = anyState;
         }
         
+        public void AddTransition(T _aState, T _bState, System.Func<bool>[] _preReqs, System.Action _onTransition)
+        {
+            Transition Transition = new Transition(_aState, _bState, _preReqs);
+            AddTransition(Transition, _onTransition);
+        }
         
         public void Update()
         {
@@ -55,16 +61,11 @@
         
         
         
+        
         private void Initialize()
         {
             SetCurrentState(_currentState);
             initialized = true;
-        }
-
-        public void AddTransition(T _aState, T _bState, System.Func<bool>[] _preReqs, System.Action _onTransition)
-        {
-            Transition Transition = new Transition(_aState, _bState, _preReqs);
-            AddTransition(Transition, _onTransition);
         }
 
         private void AddTransition(Transition _newTransition, System.Action _onTransition)
@@ -92,6 +93,8 @@
             validTransition = null;
             return false;
         }
+
+
 
 
 
