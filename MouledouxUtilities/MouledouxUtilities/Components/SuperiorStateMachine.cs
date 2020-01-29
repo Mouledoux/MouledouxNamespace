@@ -37,17 +37,25 @@
         
         public SuperiorStateMachine(T initState, T anyState)
         {
+            // You can't start in the AnyState
+            //if(initState.Equals(anyState))
+              //  Throw
+        
             _currentState = initState;
             _anyState = anyState;
         }
         
         public void AddTransition(T _aState, T _bState, System.Func<bool>[] _preReqs, System.Action _onTransition)
         {
+            // You can't transition to AnyState, only from
+            //if(_bState.Equals(anyState))
+              //  Throw
+        
             Transition Transition = new Transition(_aState, _bState, _preReqs);
             AddTransition(Transition, _onTransition);
         }
         
-        public void Update()
+        public T Update()
         {
             if(!initialized) Initialize();
             
@@ -55,8 +63,8 @@
             if(CheckAvailableForTransition(out transition))
             {   
                 MakeTransition(transition);
-                return;
             }
+            return _currentState;
         }
         
         
