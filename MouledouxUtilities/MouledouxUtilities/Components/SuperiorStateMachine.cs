@@ -18,7 +18,7 @@
 
             foreach (Transition t in allTransitions.Keys)
             {
-                if (value.Equals(t.GetAState() || t.GetAState().Equals(_anyState)))
+                if (t.GetAState().Equals(newState) || t.GetAState().Equals(_anyState))
                 {
                     availableTransitions.Add(t);
                 }
@@ -93,7 +93,7 @@
             {
                 if (transition.CheckPrerequisites())
                 {
-                    validTransition = transition
+                    validTransition = transition;
                     return true;
                 }
             }
