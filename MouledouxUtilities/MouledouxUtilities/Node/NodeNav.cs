@@ -3,173 +3,173 @@ using System.Threading.Tasks;
 using System.Collections;
 using System.Collections.Generic;
 
-public static class NodeNav
+namespace Mouledoux.Node
 {
-
-
-    // ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ----------
-    public static Stack<T> TwinStarT<T>(ITraversable begNode, ITraversable endNode, bool dualSearch = true) where T : ITraversable
+    public static class NodeNav
     {
-        object chainLocker = new object();
-
-        if(dualSearch)
+        // ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ----------
+        public static Stack<T> TwinStarT<T>(ITraversable begNode, ITraversable endNode, bool dualSearch = true) where T : ITraversable
         {
-            Thread backwards = new Thread(() => SoloStar<T>(endNode, begNode, chainLocker, false, 0f, 1f));
-            backwards.Start();
+            object chainLocker = new object();
+
+            if(dualSearch)
+            {
+                Thread backwards = new Thread(() => SoloStar<T>(endNode, begNode, chainLocker, false, 0f, 1f));
+                backwards.Start();
+            }
+
+            return SoloStar<T>(begNode, endNode, chainLocker);
         }
 
-        return SoloStar<T>(begNode, endNode, chainLocker);
-    }
 
 
-
-    public static Stack<T> SoloStar<T>(ITraversable begNode, ITraversable endNode, object chainLocker, bool canReturn = true, float hMod = 1f, float gMod = 1f) where T : ITraversable
-    {
-        if(begNode == endNode || begNode == null || endNode == null || !endNode.isTraversable) return null;
-
-
-        List<ITraversable> openList = new List<ITraversable>();
-        List<ITraversable> closedList = new List<ITraversable>();
-
-        openList.Add(begNode);
-
-        begNode.origin = null;
-        ITraversable currentNode;
-
-        while(openList.Count > 0)
+        public static Stack<T> SoloStar<T>(ITraversable begNode, ITraversable endNode, object chainLocker, bool canReturn = true, float hMod = 1f, float gMod = 1f) where T : ITraversable
         {
-            currentNode = openList[0];
+            if(begNode == endNode || begNode == null || endNode == null || !endNode.isTraversable) return null;
 
-            foreach (ITraversable neighborNode in currentNode.GetConnectedTraversables())
+
+            List<ITraversable> openList = new List<ITraversable>();
+            List<ITraversable> closedList = new List<ITraversable>();
+
+            openList.Add(begNode);
+
+            begNode.origin = null;
+            ITraversable currentNode;
+
+            while(openList.Count > 0)
             {
-                if(neighborNode == null || neighborNode.isTraversable == false) { continue; }
-                
-                // Locks the chain modifying to prevent overriding
-                lock(chainLocker)
+                currentNode = openList[0];
+
+                foreach (ITraversable neighborNode in currentNode.GetConnectedTraversables())
                 {
-                    bool endInChain = neighborNode.CheckOriginChainFor(endNode);
-
-                    if(endInChain)
+                    if(neighborNode == null || neighborNode.isTraversable == false) { continue; }
+                    
+                    // Locks the chain modifying to prevent overriding
+                    lock(chainLocker)
                     {
-                        if(canReturn == false)
-                        {
-                            return null;
-                        }
+                        bool endInChain = neighborNode.CheckOriginChainFor(endNode);
 
-                        neighborNode.ReverseOriginChain();
-                        neighborNode.origin = currentNode;
-                        Stack<T> returnStack = TraversableStackPath<T>(endNode);
-                        
-                        foreach(ITraversable tn in closedList)
+                        if(endInChain)
                         {
-                            tn.ClearOriginChain();
-                        }
-                        foreach(ITraversable tn in openList)
-                        {
-                            tn.ClearOriginChain();
-                        }
-
-                        return returnStack;
-                    }
-
-                    else
-                    {
-                        if(!closedList.Contains(neighborNode))
-                        {
-                            if(!openList.Contains(neighborNode))
+                            if(canReturn == false)
                             {
-                                neighborNode.origin = currentNode;
-                                neighborNode.pathingValues[1] = neighborNode.GetTravelCostToRootOrigin() * gMod;
-                                neighborNode.pathingValues[2] = (float)neighborNode.GetDistanceTo(endNode) * hMod;
-
-                                AddToSortedList<ITraversable>(neighborNode, ref openList);
+                                return null;
                             }
+
+                            neighborNode.ReverseOriginChain();
+                            neighborNode.origin = currentNode;
+                            Stack<T> returnStack = TraversableStackPath<T>(endNode);
+                            
+                            foreach(ITraversable tn in closedList)
+                            {
+                                tn.ClearOriginChain();
+                            }
+                            foreach(ITraversable tn in openList)
+                            {
+                                tn.ClearOriginChain();
+                            }
+
+                            return returnStack;
                         }
 
-                        // We have already been to this node, so see if it's cheaper to the current node from here
-                        else if(neighborNode.origin != currentNode &&
-                            neighborNode.pathingValues[1] < currentNode.pathingValues[1])
+                        else
                         {
-                            currentNode.origin = neighborNode;
+                            if(!closedList.Contains(neighborNode))
+                            {
+                                if(!openList.Contains(neighborNode))
+                                {
+                                    neighborNode.origin = currentNode;
+                                    neighborNode.pathingValues[1] = neighborNode.GetTravelCostToRootOrigin() * gMod;
+                                    neighborNode.pathingValues[2] = (float)neighborNode.GetDistanceTo(endNode) * hMod;
+
+                                    AddToSortedList<ITraversable>(neighborNode, ref openList);
+                                }
+                            }
+
+                            // We have already been to this node, so see if it's cheaper to the current node from here
+                            else if(neighborNode.origin != currentNode &&
+                                neighborNode.pathingValues[1] < currentNode.pathingValues[1])
+                            {
+                                currentNode.origin = neighborNode;
+                            }
                         }
                     }
                 }
+
+                closedList.Add(currentNode);
+                openList.Remove(currentNode);
             }
 
-            closedList.Add(currentNode);
-            openList.Remove(currentNode);
+            return null;
         }
 
-        return null;
-    }
 
 
-
-
-    // ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ----------
-    private static Stack<T> TraversableStackPath<T>(ITraversable endNode) where T : ITraversable
-    {
-        Stack<T> returnStack = new Stack<T>();
-        T currentNode = (T)endNode;
-
-        currentNode.ValidateOriginChain();
-
-        while(currentNode != null && !currentNode.origin.Equals(currentNode))
+        // ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ----------
+        private static Stack<T> TraversableStackPath<T>(ITraversable endNode) where T : ITraversable
         {
-            try
+            Stack<T> returnStack = new Stack<T>();
+            T currentNode = (T)endNode;
+
+            currentNode.ValidateOriginChain();
+
+            while(currentNode != null && !currentNode.origin.Equals(currentNode))
             {
-                returnStack.Push(currentNode);
-                currentNode = (T)currentNode.origin;
+                try
+                {
+                    returnStack.Push(currentNode);
+                    currentNode = (T)currentNode.origin;
+                }
+                catch(System.OutOfMemoryException)
+                {
+                    // do something
+                }
             }
-            catch(System.OutOfMemoryException)
-            {
-                //UnityEngine.Debug.Log(returnStack.Count);
-            }
+
+            return returnStack;
         }
 
-        return returnStack;
-    }
 
 
 
-
-    // ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ----------
-    private static int AddToSortedList<T>(T node, ref List<T> sortedList) where T : System.IComparable<T>
-    {
-        for(int i = 0; i < sortedList.Count; i++)
+        // ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ----------
+        private static int AddToSortedList<T>(T node, ref List<T> sortedList) where T : System.IComparable<T>
         {
-            if(node.CompareTo(sortedList[i]) < 0)
+            for(int i = 0; i < sortedList.Count; i++)
             {
-                sortedList.Insert(i, node);
-                return i;
+                if(node.CompareTo(sortedList[i]) < 0)
+                {
+                    sortedList.Insert(i, node);
+                    return i;
+                }
             }
+
+            sortedList.Add(node);
+            return sortedList.Count;
         }
-
-        sortedList.Add(node);
-        return sortedList.Count;
     }
-}
 
 
 
-public interface ITraversable : System.IComparable<ITraversable>
-{
-    ITraversable origin {get; set;}
-    float[] coordinates {get; set;}
-    float[] pathingValues {get; set;}
+    public interface ITraversable : System.IComparable<ITraversable>
+    {
+        ITraversable origin {get; set;}
+        float[] coordinates {get; set;}
+        float[] pathingValues {get; set;}
 
-    bool isOccupied {get; set;}
-    bool isTraversable {get; set;}
+        bool isOccupied {get; set;}
+        bool isTraversable {get; set;}
 
 
-    ITraversable GetRootOrigin();
-    ITraversable[] GetConnectedTraversables();
+        ITraversable GetRootOrigin();
+        ITraversable[] GetConnectedTraversables();
 
-    void ClearOriginChain();
-    void ReverseOriginChain();
-    void ValidateOriginChain();
-    bool CheckOriginChainFor(ITraversable higherOrigin);
+        void ClearOriginChain();
+        void ReverseOriginChain();
+        void ValidateOriginChain();
+        bool CheckOriginChainFor(ITraversable higherOrigin);
 
-    float GetTravelCostToRootOrigin();
-    double GetDistanceTo(ITraversable destination);
+        float GetTravelCostToRootOrigin();
+        double GetDistanceTo(ITraversable destination);
+    }
 }

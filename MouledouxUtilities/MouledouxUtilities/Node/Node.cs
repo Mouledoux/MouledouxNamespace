@@ -1,174 +1,212 @@
-﻿using System.Threading;
-using System.Threading.Tasks;
-using System.Collections;
+﻿using System.Collections;
 using System.Collections.Generic;
 
-public static class NodeNav
+namespace Mouledoux.Node
 {
+    public class Node
+    {    private List<Node> m_neighbors;
+        private List<object> m_information;
 
-
-    // ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ----------
-    public static Stack<T> TwinStarT<T>(ITraversable begNode, ITraversable endNode, bool dualSearch = true) where T : ITraversable
-    {
-        object chainLocker = new object();
-
-        if(dualSearch)
+        public Node()
         {
-            Thread backwards = new Thread(() => SoloStar<T>(endNode, begNode, chainLocker, false, 0f, 1f));
-            backwards.Start();
+            m_neighbors = new List<Node>();
+            m_information = new List<object>();
         }
 
-        return SoloStar<T>(begNode, endNode, chainLocker);
-    }
-
-
-
-    public static Stack<T> SoloStar<T>(ITraversable begNode, ITraversable endNode, object chainLocker, bool canReturn = true, float hMod = 1f, float gMod = 1f) where T : ITraversable
-    {
-        if(begNode == endNode || begNode == null || endNode == null || !endNode.isTraversable) return null;
-
-
-        List<ITraversable> openList = new List<ITraversable>();
-        List<ITraversable> closedList = new List<ITraversable>();
-
-        openList.Add(begNode);
-
-        begNode.origin = null;
-        ITraversable currentNode;
-
-        while(openList.Count > 0)
+        // ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ----------
+        public Node[] GetNeighbors()
         {
-            currentNode = openList[0];
+            Node[] myNeighbors = m_neighbors.ToArray();
+            return myNeighbors;
+        }
 
-            foreach (ITraversable neighborNode in currentNode.GetConnectedTraversables())
+        // ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ----------
+        public Node[] GetNeighborhood(uint a_layers = 1)
+        {   
+            int index = 0;
+            int neighbors = 0;
+
+            List<Node> neighborhood = new List<Node>();
+            neighborhood.Add(this);
+
+            for(int i = 0; i < a_layers; i++)
             {
-                if(neighborNode == null || neighborNode.isTraversable == false) { continue; }
-                
-                // Locks the chain modifying to prevent overriding
-                lock(chainLocker)
+                neighbors = neighborhood.Count;
+                for(int j = index; j < neighbors; j++)
                 {
-                    bool endInChain = neighborNode.CheckOriginChainFor(endNode);
-
-                    if(endInChain)
+                    foreach(Node n in neighborhood[j].GetNeighbors())
                     {
-                        if(canReturn == false)
+                        if(!neighborhood.Contains(n))
                         {
-                            return null;
-                        }
-
-                        neighborNode.ReverseOriginChain();
-                        neighborNode.origin = currentNode;
-                        Stack<T> returnStack = TraversableStackPath<T>(endNode);
-                        
-                        foreach(ITraversable tn in closedList)
-                        {
-                            tn.ClearOriginChain();
-                        }
-                        foreach(ITraversable tn in openList)
-                        {
-                            tn.ClearOriginChain();
-                        }
-
-                        return returnStack;
-                    }
-
-                    else
-                    {
-                        if(!closedList.Contains(neighborNode))
-                        {
-                            if(!openList.Contains(neighborNode))
-                            {
-                                neighborNode.origin = currentNode;
-                                neighborNode.pathingValues[1] = neighborNode.GetTravelCostToRootOrigin() * gMod;
-                                neighborNode.pathingValues[2] = (float)neighborNode.GetDistanceTo(endNode) * hMod;
-
-                                AddToSortedList<ITraversable>(neighborNode, ref openList);
-                            }
-                        }
-
-                        // We have already been to this node, so see if it's cheaper to the current node from here
-                        else if(neighborNode.origin != currentNode &&
-                            neighborNode.pathingValues[1] < currentNode.pathingValues[1])
-                        {
-                            currentNode.origin = neighborNode;
+                            neighborhood.Add(n);
                         }
                     }
+                    index = j;
+                }
+            }
+            neighborhood.Remove(this);
+            return neighborhood.ToArray();
+        }
+
+        // ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ----------
+        public Node[] GetNeighborhoodLayers(uint a_innerBand, uint a_bandWidth = 1)
+        {
+            //innerBand--;
+            Node[] n1 = GetNeighborhood(a_innerBand + a_bandWidth);
+            Node[] n2 = GetNeighborhood(a_innerBand);
+
+            List<Node> neighborhood = new List<Node>();
+
+            foreach (Node n in n1)
+                neighborhood.Add(n);
+
+            foreach (Node n in n2)
+                neighborhood.Remove(n);
+            
+            return neighborhood.ToArray();
+        }
+
+        // ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ----------
+        public int AddNeighbor(Node a_newNeighbor)
+        {
+            if(a_newNeighbor == null)
+                return -1;
+            else if(a_newNeighbor == this)
+                return -2;
+
+            if(!m_neighbors.Contains(a_newNeighbor))
+                m_neighbors.Add(a_newNeighbor);
+
+            if(!a_newNeighbor.m_neighbors.Contains(this))
+                a_newNeighbor.AddNeighbor(this);
+
+            return 0;
+        }
+
+        // ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ----------
+        public bool CheckIsNeighbor(Node a_node)
+        {
+            return m_neighbors.Contains(a_node);
+        }
+
+        // ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ----------
+        public int RemoveNeighbor(Node a_oldNeighbor)
+        {
+            m_neighbors.Remove(a_oldNeighbor);
+            a_oldNeighbor.RemoveNeighbor(this);
+
+            return 0;
+        }
+
+        // ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ----------
+        public int ClearNeighbors()
+        {
+            foreach(Node n in m_neighbors)
+                n.RemoveNeighbor(this);
+            
+            m_neighbors.Clear();
+
+            return 0;
+        }
+
+        // ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ----------
+        public int TradeNeighbors(Node a_neighbor)
+        {
+            if(a_neighbor == null) return -1;
+            else if(!m_neighbors.Contains(a_neighbor)) return -2;
+
+            Node[] myNeighbors;
+
+
+            // // Remove eachother as neighbors, so they aren't neighbors to themselves
+            // RemoveNeighbor(a_neighbor);
+            // a_neighbor.RemoveNeighbor(this);
+
+            // Save this node neighbors to a temp array
+            myNeighbors = m_neighbors.ToArray();
+        
+
+            ClearNeighbors();                               // Clear this node's neighbors
+            foreach(Node n in a_neighbor.GetNeighbors())    // For each neighbor of my neighbor
+                AddNeighbor(n);                                 // Copy it to this node's neighbors
+            AddNeighbor(a_neighbor);                        // Add the neighbor back to this node's neighbors
+
+
+            a_neighbor.ClearNeighbors();                    // Clear the neighbor's neighbors
+            foreach(Node n in myNeighbors)                  // For each node in the temp array
+                a_neighbor.AddNeighbor(n);                        // Copy it to the neighbor's new neighbors
+            a_neighbor.AddNeighbor(this);                   // Add this node back to the neighbor's neighbors
+
+            return 0;
+        }
+
+
+
+        // ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ----------
+        public int AddInformation(object a_info)
+        {
+            m_information.Add(a_info);
+            return 0;
+        }
+
+        // ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ----------
+        public int RemoveInformation(object a_info)
+        {
+            if(m_information.Contains(a_info))
+                m_information.Remove(a_info);
+
+            return 0;
+        }
+
+        // ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ----------
+        public bool CheckInformationFor(object a_info)
+        {
+            return m_information.Contains(a_info);
+        }
+
+        // ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ----------
+        public T[] GetInformation<T>()
+        {
+            List<T> returnList = new List<T>();
+
+            foreach(object info in m_information)
+            {
+                if(typeof(T).IsAssignableFrom(info.GetType()))
+                {
+                    returnList.Add((T)info);
+                }
+            }
+            return returnList.ToArray();
+        }
+
+        public T[] GetNeighborsInformation<T>()
+        {
+            return GetMassNodeInformation<T>(GetNeighbors());
+        }
+
+        public T[] GetNeighborhoodInformation<T>(uint a_layers = 1)
+        {
+            return GetMassNodeInformation<T>(GetNeighborhood(a_layers));
+        }
+
+        public T[] GetNeighborhoodLayersInformation<T>(uint a_innerBand, uint a_bandWidth = 1)
+        {
+            return GetMassNodeInformation<T>(GetNeighborhoodLayers(a_innerBand, a_bandWidth));
+        }
+
+        private static T[] GetMassNodeInformation<T>(Node[] nodes)
+        {
+            List<T> returnList = new List<T>();
+
+            foreach(Node node in nodes)
+            {
+                foreach(T info in node.GetInformation<T>())
+                {
+                    returnList.Add(info);
                 }
             }
 
-            closedList.Add(currentNode);
-            openList.Remove(currentNode);
+            return returnList.ToArray();
         }
-
-        return null;
     }
-
-
-
-    // ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ----------
-    private static Stack<T> TraversableStackPath<T>(ITraversable endNode) where T : ITraversable
-    {
-        Stack<T> returnStack = new Stack<T>();
-        T currentNode = (T)endNode;
-
-        currentNode.ValidateOriginChain();
-
-        while(currentNode != null && !currentNode.origin.Equals(currentNode))
-        {
-            try
-            {
-                returnStack.Push(currentNode);
-                currentNode = (T)currentNode.origin;
-            }
-            catch(System.OutOfMemoryException)
-            {
-                // do something
-            }
-        }
-
-        return returnStack;
-    }
-
-
-
-
-    // ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ----------
-    private static int AddToSortedList<T>(T node, ref List<T> sortedList) where T : System.IComparable<T>
-    {
-        for(int i = 0; i < sortedList.Count; i++)
-        {
-            if(node.CompareTo(sortedList[i]) < 0)
-            {
-                sortedList.Insert(i, node);
-                return i;
-            }
-        }
-
-        sortedList.Add(node);
-        return sortedList.Count;
-    }
-}
-
-
-
-public interface ITraversable : System.IComparable<ITraversable>
-{
-    ITraversable origin {get; set;}
-    float[] coordinates {get; set;}
-    float[] pathingValues {get; set;}
-
-    bool isOccupied {get; set;}
-    bool isTraversable {get; set;}
-
-
-    ITraversable GetRootOrigin();
-    ITraversable[] GetConnectedTraversables();
-
-    void ClearOriginChain();
-    void ReverseOriginChain();
-    void ValidateOriginChain();
-    bool CheckOriginChainFor(ITraversable higherOrigin);
-
-    float GetTravelCostToRootOrigin();
-    double GetDistanceTo(ITraversable destination);
 }
