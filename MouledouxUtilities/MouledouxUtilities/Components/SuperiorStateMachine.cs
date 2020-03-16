@@ -60,7 +60,7 @@
             if(!initialized) Initialize();
             
             Transition transition;
-            if(CheckAvailableForTransition(out transition))
+            if(CheckForAvailableTransition(out transition))
             {   
                 MakeTransition(transition);
             }
