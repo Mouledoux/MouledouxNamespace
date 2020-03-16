@@ -19,9 +19,9 @@ The Mouledoux namespace is a collection of classes and functions specifically ma
   - NO MANUAL STATE CHANGES
   - States are automatically transitioned to when predefined prerequisites are met
   - Unique On Transition events for each transistion, not each state
-- Callback **[depricated] Callback has been replaced with Action<object[]>**
-  - Void delegate that takes object[] args
-  - Packet **[depricated]**
+- ~~Callback **[depricated] Callback has been replaced with Action<object[]>**~~
+  - ~~Void delegate that takes object[] args~~
+  - ~~Packet **[depricated]**~~
 
 ## In progress
 - Decision trees (AI)
