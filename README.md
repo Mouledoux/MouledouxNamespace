@@ -25,4 +25,5 @@ The Mouledoux namespace is a collection of classes and functions specifically ma
 
 ## In progress
 - Decision trees (AI)
+- Neural net
 - Data Containers (public, static, storage for arbitrary variables)
