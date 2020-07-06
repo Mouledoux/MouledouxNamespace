@@ -6,9 +6,22 @@
     public sealed class Mediator
     {
         /// <summary>
-        /// Dictionary of subscription strings and associated delegate callbacks
+        /// Dictionary of subscription strings and associated delegate callbacks to be called first on message broadcast
+        /// </summary>
+        private static System.Collections.Generic.Dictionary<string, System.Action<object[]>> earlySubscriptions =
+            new System.Collections.Generic.Dictionary<string, System.Action<object[]>>();
+
+        /// <summary>
+        /// Dictionary of subscription strings and associated delegate callbacks to be called after earlySubscriptions
         /// </summary>
         private static System.Collections.Generic.Dictionary<string, System.Action<object[]>> subscriptions =
+            new System.Collections.Generic.Dictionary<string, System.Action<object[]>>();
+
+
+        /// <summary>
+        /// Dictionary of subscription strings and associated delegate callbacks to be called last on message broadcast
+        /// </summary>
+        private static System.Collections.Generic.Dictionary<string, System.Action<object[]>> lateSubscriptions =
             new System.Collections.Generic.Dictionary<string, System.Action<object[]>>();
 
         /// <summary>
@@ -30,7 +43,9 @@
         /// </returns>
         public static bool CheckForSubscription(string message)
         {
-            return subscriptions.ContainsKey(message);
+            return subscriptions.ContainsKey(message)
+                || earlySubscriptions.ContainsKey(message)
+                || lateSubscriptions.ContainsKey(message);
         }
 
 
