@@ -1,39 +1,39 @@
-﻿namespace Mouledoux.Components
+﻿using System.Collections.Generic;
+
+namespace Mouledoux.Components
 {
     /// <summary>
     /// Static class for all mediation.
     /// </summary>
     public sealed class Mediator
     {
-        public enum SubscriptionPriority
-        {
-            DEFAULT,
-            EARLY,
-            LATE,
-        }
         /// <summary>
         /// Dictionary of subscription strings and associated delegate callbacks to be called first on message broadcast
         /// </summary>
-        private static System.Collections.Generic.Dictionary<string, System.Action<object[]>> m_earlySubscriptions =
-            new System.Collections.Generic.Dictionary<string, System.Action<object[]>>();
+        private static Dictionary<string, System.Action<object[]>> m_earlySubscriptions =
+            new Dictionary<string, System.Action<object[]>>();
 
         /// <summary>
         /// Dictionary of subscription strings and associated delegate callbacks to be called after earlySubscriptions
         /// </summary>
-        private static System.Collections.Generic.Dictionary<string, System.Action<object[]>> m_primeSubscriptions =
-            new System.Collections.Generic.Dictionary<string, System.Action<object[]>>();
+        private static Dictionary<string, System.Action<object[]>> m_primeSubscriptions =
+            new Dictionary<string, System.Action<object[]>>();
 
         /// <summary>
         /// Dictionary of subscription strings and associated delegate callbacks to be called last on message broadcast
         /// </summary>
-        private static System.Collections.Generic.Dictionary<string, System.Action<object[]>> m_lateSubscriptions =
-            new System.Collections.Generic.Dictionary<string, System.Action<object[]>>();
+        private static Dictionary<string, System.Action<object[]>> m_lateSubscriptions =
+            new Dictionary<string, System.Action<object[]>>();
+
+
+        private static Dictionary<string, List<System.Action<object[]>>> m_orderedSubscriptions;
+
 
         /// <summary>
         /// List of messages held to be re-broadcated once something is subscribed to it
         /// </summary>
-        private static System.Collections.Generic.List<string> m_holdMessages = 
-        new System.Collections.Generic.List<string>();
+        private static List<string> m_holdMessages = 
+        new List<string>();
 
 
 
@@ -57,7 +57,7 @@
         }
 
 
-        private static bool ValidateSubscriptionCallbacks(ref System.Collections.Generic.Dictionary<string, System.Action<object[]>> a_subs, string a_message)
+        private static bool ValidateSubscriptionCallbacks(ref Dictionary<string, System.Action<object[]>> a_subs, string a_message)
         {
             // Temporary delegate container for modifying subscription delegates 
             System.Action<object[]> cb;
@@ -86,7 +86,7 @@
         }
 
 
-        private static bool TryInvokeSubscription(ref System.Collections.Generic.Dictionary<string, System.Action<object[]>> a_subs, string a_message, object[] a_args)
+        private static bool TryInvokeSubscription(ref Dictionary<string, System.Action<object[]>> a_subs, string a_message, object[] a_args)
         {
             if (ValidateSubscriptionCallbacks(ref a_subs, a_message))
             {
@@ -146,7 +146,7 @@
         /// <param name="container">Reference to the dictionary of subscriptions we want to modify</param>
         /// <param name="message">The message to subscribe to</param>
         /// <param name="callback">The delegate to be linked to the broadcast message</param>
-        private static void Subscribe(ref System.Collections.Generic.Dictionary<string, System.Action<object[]>> a_container, string a_message, System.Action<object[]> a_callback)
+        private static void Subscribe(ref Dictionary<string, System.Action<object[]>> a_container, string a_message, System.Action<object[]> a_callback)
         {
             a_message = a_message.ToLower();
 
@@ -179,7 +179,7 @@
         /// <param name="container">Reference to the dictionary of subscriptions we want to modify</param>
         /// <param name="message">The message to unsubscribe from</param>
         /// <param name="callback">The delegate to be removed from the broadcast message</param>
-        private static void Unsubscribe(ref System.Collections.Generic.Dictionary<string, System.Action<object[]>> a_container, string a_message, System.Action<object[]> a_callback)
+        private static void Unsubscribe(ref Dictionary<string, System.Action<object[]>> a_container, string a_message, System.Action<object[]> a_callback)
         {
             a_message = a_message.ToLower();
 
@@ -211,7 +211,7 @@
         }
 
 
-        private static void UnsubscribeLocalFromMaster(ref System.Collections.Generic.Dictionary<string, System.Action<object[]>> a_localContainer, ref System.Collections.Generic.Dictionary<string, System.Action<object[]>> a_masterContainer)
+        private static void UnsubscribeLocalFromMaster(ref Dictionary<string, System.Action<object[]>> a_localContainer, ref Dictionary<string, System.Action<object[]>> a_masterContainer)
         {
             foreach (string message in a_localContainer.Keys)
             {
@@ -233,18 +233,18 @@
             /// <summary>
             /// Personal, internal record of all early subscriptions
             /// </summary>
-            private System.Collections.Generic.Dictionary<string, System.Action<object[]>> m_localEarlySubscriptions =
-                 new System.Collections.Generic.Dictionary<string, System.Action<object[]>>();
+            private Dictionary<string, System.Action<object[]>> m_localEarlySubscriptions =
+                 new Dictionary<string, System.Action<object[]>>();
             /// <summary>
             /// Personal, internal record of all prime subscriptions
             /// </summary>
-            private System.Collections.Generic.Dictionary<string, System.Action<object[]>> m_localPrimeSubscriptions =
-                 new System.Collections.Generic.Dictionary<string, System.Action<object[]>>();
+            private Dictionary<string, System.Action<object[]>> m_localPrimeSubscriptions =
+                 new Dictionary<string, System.Action<object[]>>();
             /// <summary>
             /// Personal, internal record of all late subscriptions
             /// </summary>
-            private System.Collections.Generic.Dictionary<string, System.Action<object[]>> m_localLateSubscriptions =
-                 new System.Collections.Generic.Dictionary<string, System.Action<object[]>>();
+            private Dictionary<string, System.Action<object[]>> m_localLateSubscriptions =
+                 new Dictionary<string, System.Action<object[]>>();
 
 
 
@@ -255,21 +255,24 @@
             /// </summary>
             /// <param name="message">The message to subscribe to</param>
             /// <param name="callback">The delegate to be linked to the broadcast message</param>
-            public void Subscribe(string a_message, System.Action<object[]> a_callback, bool a_acceptStaleMessages = false, SubscriptionPriority a_priority = 0)
+            public void Subscribe(string a_message, System.Action<object[]> a_callback, bool a_acceptStaleMessages = false, int a_priority = 0)
             {
                 switch(a_priority)
                 {
-                    case SubscriptionPriority.EARLY:
+                    case 0:
                         Mediator.Subscribe(ref m_localEarlySubscriptions, a_message, a_callback);
                         Mediator.Subscribe(ref m_earlySubscriptions, a_message, a_callback);
                         break;
-                    case SubscriptionPriority.DEFAULT:
+                    case 1:
                         Mediator.Subscribe(ref m_localPrimeSubscriptions, a_message, a_callback);
                         Mediator.Subscribe(ref m_primeSubscriptions, a_message, a_callback);
                         break;
-                    case SubscriptionPriority.LATE:
+                    case 2:
                         Mediator.Subscribe(ref m_localLateSubscriptions, a_message, a_callback);
                         Mediator.Subscribe(ref m_lateSubscriptions, a_message, a_callback);
+                        break;
+
+                    default:
                         break;
                 }
 
