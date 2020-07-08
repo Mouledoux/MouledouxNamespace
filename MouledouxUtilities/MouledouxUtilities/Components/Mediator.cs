@@ -7,7 +7,8 @@ namespace Mouledoux.Components
         /// <summary>
         /// Messages and their associated subscriptions
         /// </summary>
-        private static Dictionary<string, List<Subscription>> m_orderedSubscriptions;
+        private static Dictionary<string, List<Subscription>> m_orderedSubscriptions =
+            new Dictionary<string, List<Subscription>>();
 
         /// <summary>
         /// Messages that had no subscriptions at broadcast, but were marked for hold
@@ -101,7 +102,7 @@ namespace Mouledoux.Components
                             a_container[a_message][i] = tSub[i];
                         }
                     }
-                    
+
                     // catch if the sub trigger a null ref
                     catch (System.NullReferenceException)
                     {
@@ -109,12 +110,23 @@ namespace Mouledoux.Components
                         // and accomidate for sub list loosing 1
                         tSub.RemoveAt(i);
                         i--;
-                    }   
+                    }
+                }
+
+                // return true if the message has any remaining valid subs
+                if (a_container[a_message].Count > 0)
+                {
+                    return true;
+                }
+                // else, remove the message subscription
+                else
+                {
+                    a_container.Remove(a_message);
                 }
             }
 
-            // return true if the message has any remaining valid subs
-            return a_container[a_message].Count > 0;
+            // there are no subscriptions to that mesasge
+            return false;
         }
 
 
@@ -129,7 +141,7 @@ namespace Mouledoux.Components
         {
             if (ValidateSubscriptionCallbacks(ref a_container, a_message))
             {
-                foreach(Subscription sub in a_container[a_message])
+                foreach (Subscription sub in a_container[a_message])
                 {
                     sub.m_callback.Invoke(a_args);
                 }
@@ -139,9 +151,9 @@ namespace Mouledoux.Components
             {
                 return false;
             }
-        }        
+        }
 
-        
+
         private static void Subscribe(ref Dictionary<string, List<Subscription>> a_container, string a_message, System.Action<object[]> a_callback, int a_priority = 0)
         {
             a_message = a_message.ToLower();
@@ -177,9 +189,9 @@ namespace Mouledoux.Components
         private static void Unsubscribe(ref Dictionary<string, List<Subscription>> a_container, Subscription a_sub)
         {
             string message = a_sub.m_message.ToLower();
-            
-            List<Subscription> tSub; 
-            
+
+            List<Subscription> tSub;
+
             if (a_container.TryGetValue(message, out tSub))
             {
                 tSub.Remove(a_sub);
@@ -224,9 +236,9 @@ namespace Mouledoux.Components
 
             public Subscription(string a_message, System.Action<object[]> a_callback, int a_priority = 0)
             {
-                m_message = a_message;
+                _message = a_message;
+                _priority = a_priority;
                 m_callback = a_callback;
-                m_priority = a_priority;
             }
 
             public void Subscribe(bool a_acceptStaleMessages = false)
