@@ -2,36 +2,77 @@
 
 namespace Mouledoux.Components
 {
-    /// <summary>
-    /// Static class for all mediation.
-    /// </summary>
     public sealed class Mediator
     {
+        /// <summary>
+        /// Messages and their associated subscriptions
+        /// </summary>
         private static Dictionary<string, List<Subscription>> m_orderedSubscriptions;
+
+        /// <summary>
+        /// Messages that had no subscriptions at broadcast, but were marked for hold
+        /// </summary>
+        private static List<string> m_staleMessages = new List<string>();
+
+
+
 
 
         /// <summary>
-        /// List of messages held to be re-broadcated once something is subscribed to it
+        /// Broadcast a message to potential subscribers
         /// </summary>
-        private static List<string> m_staleMessages = 
-        new List<string>();
+        /// <param name="a_message">message to broadcast</param>
+        /// <param name="a_args">arguments to pass to subscription callbacks</param>
+        /// <param name="a_holdMessage">if there are no active subscriptions, rebroadcast when one subscribes</param>
+        /// <returns></returns>
+        public static int NotifySubscribers(string a_message, object[] a_args = null, bool a_holdMessage = false)
+        {
+            a_message = a_message.ToLower();
+
+
+            // Makes sure the object array has been set to something, even if one isn't provideds
+            a_args = a_args == null ? new object[0] : a_args;
+
+            bool messageBroadcasted = TryInvokeSubscription(ref m_orderedSubscriptions, a_message, a_args);
+
+            // If nothing is listening to the message, but it's been marked to hold
+            if (!messageBroadcasted && a_holdMessage && !m_staleMessages.Contains(a_message))
+            {
+                // add it to the hold list
+                m_staleMessages.Add(a_message);
+            }
+
+            return 0;
+        }
 
 
 
 
-        
+
+        /// <summary>
+        /// Checks if a subscription message exist
+        /// </summary>
+        /// <param name="a_message">subscription message to check</param>
+        /// <returns>returns true if the message exist</returns>
         public static bool CheckForSubscription(string a_message)
         {
             return m_orderedSubscriptions.ContainsKey(a_message);
         }
 
 
-        private static bool ValidateSubscriptionCallbacks(ref Dictionary<string, List<Subscription>> a_subs, string a_message)
+        /// <summary>
+        /// Checks subscription associated callbacks for null ref errors
+        /// Removes any that are not validated
+        /// </summary>
+        /// <param name="a_container">message subscription dictionary</param>
+        /// <param name="a_message">message to validate callbacks under</param>
+        /// <returns>return true if valid callbacks >= 1</returns>
+        private static bool ValidateSubscriptionCallbacks(ref Dictionary<string, List<Subscription>> a_container, string a_message)
         {
             List<Subscription> tSub;
 
             // get all the subscriptions to a single message
-            if (a_subs.TryGetValue(a_message, out tSub))
+            if (a_container.TryGetValue(a_message, out tSub))
             {
                 // for all the subs to the message
                 for (int i = 0; i < tSub.Count; i++)
@@ -50,14 +91,14 @@ namespace Mouledoux.Components
                         {
                             // remove the sub from the mesasge
                             // and accomidate for the sub list loosing 1
-                            a_subs[a_message].RemoveAt(i);
+                            a_container[a_message].RemoveAt(i);
                             i--;
                         }
 
                         else
                         {
                             // apply the remang actions to the sub
-                            a_subs[a_message][i] = tSub[i];
+                            a_container[a_message][i] = tSub[i];
                         }
                     }
                     
@@ -73,15 +114,22 @@ namespace Mouledoux.Components
             }
 
             // return true if the message has any remaining valid subs
-            return a_subs[a_message].Count > 0;
+            return a_container[a_message].Count > 0;
         }
 
 
-        private static bool TryInvokeSubscription(ref Dictionary<string, List<Subscription>> a_subs, string a_message, object[] a_args)
+        /// <summary>
+        /// Invokes all valid callbacks subscribed to a message
+        /// </summary>
+        /// <param name="a_container">message subscription dictionary</param>
+        /// <param name="a_message">message to be broadcasted</param>
+        /// <param name="a_args">arguments to pass to the callback</param>
+        /// <returns>returns true if the broadcast was successful</returns>
+        private static bool TryInvokeSubscription(ref Dictionary<string, List<Subscription>> a_container, string a_message, object[] a_args)
         {
-            if (ValidateSubscriptionCallbacks(ref a_subs, a_message))
+            if (ValidateSubscriptionCallbacks(ref a_container, a_message))
             {
-                foreach(Subscription sub in a_subs[a_message])
+                foreach(Subscription sub in a_container[a_message])
                 {
                     sub.m_callback.Invoke(a_args);
                 }
@@ -91,28 +139,7 @@ namespace Mouledoux.Components
             {
                 return false;
             }
-        }
-
-        
-        public static int NotifySubscribers(string a_message, object[] a_args = null, bool a_holdMessage = false)
-        {
-            a_message = a_message.ToLower();
-            
-
-            // Makes sure the object array has been set to something, even if one isn't provideds
-            a_args = a_args == null ? new object[0] : a_args;
-
-            bool messageBroadcasted = TryInvokeSubscription(ref m_orderedSubscriptions, a_message, a_args);
-            
-            // If nothing is listening to the message, but it's been marked to hold
-            if(!messageBroadcasted && a_holdMessage && !m_staleMessages.Contains(a_message))
-            {
-                // add it to the hold list
-                m_staleMessages.Add(a_message);
-            }
-
-            return 0;
-        }
+        }        
 
         
         private static void Subscribe(ref Dictionary<string, List<Subscription>> a_container, string a_message, System.Action<object[]> a_callback, int a_priority = 0)
@@ -147,36 +174,29 @@ namespace Mouledoux.Components
         }
 
 
-        private static void Unsubscribe(ref Dictionary<string, System.Action<object[]>> a_container, string a_message, System.Action<object[]> a_callback)
+        private static void Unsubscribe(ref Dictionary<string, List<Subscription>> a_container, Subscription a_sub)
         {
-            a_message = a_message.ToLower();
-
-            // Temporary delegate container for modifying subscription delegates 
-            System.Action<object[]> cb;
-
-            // Check to see if there is a subscription to this message
-            if (a_container.TryGetValue(a_message, out cb))
+            string message = a_sub.m_message.ToLower();
+            
+            List<Subscription> tSub; 
+            
+            if (a_container.TryGetValue(message, out tSub))
             {
-                /// If the subscription does already exist,
-                /// then cb is populated with all associated delegates.
-                /// Otherwise nothing will happen
+                tSub.Remove(a_sub);
 
-                // Remove the selected delegate from the callback
-                cb -= a_callback;
-
-                // Check the modified cb to see if there are any delegates left
-                if (cb == null)
+                if (tSub.Count == 0)
                 {
-                    // If there is not, then remove the subscription completely
-                    a_container.Remove(a_message);
+                    a_container.Remove(message);
                 }
                 else
                 {
-                    // If there are some left, reset the callback to the now lesser cb
-                    a_container[a_message] = cb;
+                    a_container[message] = tSub;
                 }
             }
         }
+
+
+
 
 
         public sealed class Subscription : System.IComparable<Subscription>
@@ -188,7 +208,12 @@ namespace Mouledoux.Components
             public string m_message
             {
                 get => _message;
-                set => _message = value;
+                set
+                {
+                    Unsubscribe();
+                    _message = value;
+                    Subscribe();
+                }
             }
 
             public int m_priority
@@ -202,6 +227,16 @@ namespace Mouledoux.Components
                 m_message = a_message;
                 m_callback = a_callback;
                 m_priority = a_priority;
+            }
+
+            public void Subscribe(bool a_acceptStaleMessages = false)
+            {
+                Mediator.Subscribe(ref m_orderedSubscriptions, this, a_acceptStaleMessages);
+            }
+
+            public void Unsubscribe()
+            {
+                Mediator.Unsubscribe(ref m_orderedSubscriptions, this);
             }
 
             public int CompareTo(Subscription sub)
