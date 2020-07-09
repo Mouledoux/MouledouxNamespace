@@ -241,9 +241,10 @@ namespace Mouledoux.Components
                 m_callback = a_callback;
             }
 
-            public void Subscribe(bool a_acceptStaleMessages = false)
+            public Subscription Subscribe(bool a_acceptStaleMessages = false)
             {
                 Mediator.Subscribe(ref m_orderedSubscriptions, this, a_acceptStaleMessages);
+                return this;
             }
 
             public void Unsubscribe()
