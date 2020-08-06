@@ -1,4 +1,4 @@
-﻿using System.Threading;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Collections;
 using System.Collections.Generic;
@@ -11,6 +11,7 @@ namespace Mouledoux.Node
         public static Stack<T> TwinStarT<T>(ITraversable begNode, ITraversable endNode, bool dualSearch = true) where T : ITraversable
         {
             object chainLocker = new object();
+
 
             if(dualSearch)
             {
@@ -79,19 +80,18 @@ namespace Mouledoux.Node
                                 if(!openList.Contains(neighborNode))
                                 {
                                     neighborNode.origin = currentNode;
-                                    neighborNode.pathingValues[1] = neighborNode.GetTravelCostToRootOrigin() * gMod;
-                                    neighborNode.pathingValues[2] = (float)neighborNode.GetDistanceTo(endNode) * hMod;
+                                    neighborNode.gVal = neighborNode.GetTravelCostToRootOrigin() * gMod;
+                                    neighborNode.hVal = (float)neighborNode.GetDistanceTo(endNode) * hMod;
 
                                     AddToSortedList<ITraversable>(neighborNode, ref openList);
                                 }
                             }
 
                             // We have already been to this node, so see if it's cheaper to the current node from here
-                            else if(neighborNode.origin != currentNode &&
-                                neighborNode.pathingValues[1] < currentNode.pathingValues[1])
+                            else if(neighborNode.origin != currentNode && neighborNode.CompareTo(currentNode) < 0)
                             {
                                 currentNode.origin = neighborNode;
-                            }
+                            }                            
                         }
                     }
                 }
@@ -155,6 +155,9 @@ namespace Mouledoux.Node
     {
         ITraversable origin {get; set;}
         float[] coordinates {get; set;}
+        float fVal {get;}
+        float gVal {get; set;}
+        float hVal {get; set;}
         float[] pathingValues {get; set;}
 
         bool isOccupied {get; set;}
