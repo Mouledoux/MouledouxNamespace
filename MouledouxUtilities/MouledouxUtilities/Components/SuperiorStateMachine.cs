@@ -135,10 +135,14 @@
             {
                 bool passPreReqs = true;
 
-                foreach (System.Func<bool> pr in preReqs)
+                if (preReqs != null)
                 {
-                    passPreReqs = passPreReqs & pr.Invoke();
+                    foreach (System.Func<bool> pr in preReqs)
+                    {
+                        passPreReqs = passPreReqs & pr.Invoke();
+                    }
                 }
+
                 return passPreReqs;
             }
         }
