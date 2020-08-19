@@ -2,43 +2,91 @@
 {
     public sealed class SuperiorStateMachine<T>
     {
+        // Properties // ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ----------
+        #region ----- Properties -----
+
+
+        /// <summary>
+        /// If the SSM has been initialized. Will be set true after first Update call
+        /// </summary>
         private bool initialized = false;
+        // ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- initialized
 
-        private T _anyState;
+        /// <summary>
+        /// The current state the machine is in.
+        /// </summary>
+        public T currentState { get; private set; }
+        // ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- currentState
 
-        private T _currentState;
-        public T GetCurrentState()
-        {
-            return _currentState;
-        }
+        /// <summary>
+        /// A predefined T variable to act as a target for abstract transitions
+        /// </summary>
+        public T anyState { get; private set; }
+        // ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- anyState
 
 
+        /// <summary>
+        /// Collection of all possible transitions in the machine.
+        /// </summary>
         private System.Collections.Generic.Dictionary<Transition, System.Action> allTransitions =
             new System.Collections.Generic.Dictionary<Transition, System.Action>();
+        // ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- allTransitions
 
+        /// <summary>
+        /// Collection of all possible transitions FROM the currentState
+        /// </summary>
         private System.Collections.Generic.List<Transition> availableTransitions =
             new System.Collections.Generic.List<Transition>();
+        // ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- availableTransitions
 
+
+        /// <summary>
+        /// A transition to hold global prerequisites to transition FROM the currentState
+        /// </summary>
         private Transition anyTransition;
+        // ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- anyTransition
+
+        /// <summary>
+        /// An action delegate called on a successful transition AFTER the state-specific action delegate
+        /// </summary>
         private System.Action onAnyTransition;
+        // ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- onAnyTransitions
+
+        #endregion
+        // Properties \\ ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ----------
 
 
-        public SuperiorStateMachine(T initState, T anyState)
+        // Methods // ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ----------
+        #region ----- Methods -----
+
+
+        /// <summary>
+        /// Constructor for SusperiorStateMachine
+        /// SMM is NOT initialized in its constructor, and will be done at runtime
+        /// </summary>
+        /// <param name="a_initState">The state the machine will initialize in</param>
+        /// <param name="a_anyState">A state to represent "any" state in an abstract transition</param>
+        public SuperiorStateMachine(T a_initState, T a_anyState)
         {
             // You can't start in the AnyState
-            if (initState.Equals(anyState))
+            if (a_initState.Equals(a_anyState))
             {
                 throw new System.NotSupportedException("The INIT, and the ANY state must be different");
             }
 
-            _currentState = initState;
-            _anyState = anyState;
+            currentState = a_initState;
+            anyState = a_anyState;
         }
+        // ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- SuperiorStateMachine
 
 
-        private void SetCurrentState(T newState)
+        /// <summary>
+        /// Sets the currentState, and populates the availableTransitions FROM currentState
+        /// </summary>
+        /// <param name="a_newState">The new currentState</param>
+        private void SetCurrentState(T a_newState)
         {
-            _currentState = newState;
+            currentState = a_newState;
             availableTransitions.Clear();
 
             anyTransition = null;
@@ -46,28 +94,30 @@
 
             foreach (Transition t in allTransitions.Keys)
             {
-                if ((t.GetAState().Equals(newState) || t.GetAState().Equals(_anyState)) && (!t.GetBState().Equals(_anyState)))
+                // Add the transition if aState is currentState OR if aState is the anyState. Do not add if bState is the anyState
+                if ((t.aState.Equals(a_newState) || t.aState.Equals(anyState)) && (!t.bState.Equals(anyState)))
                 {
                     availableTransitions.Add(t);
                 }
-                else if (t.GetAState().Equals(newState) && t.GetBState().Equals(_anyState))
+                // If the bState IS the anyState, set anyTransition
+                else if (t.aState.Equals(a_newState) && t.bState.Equals(anyState))
                 {
                     anyTransition = t;
                     onAnyTransition = allTransitions[t];
                 }
             }
         }
+        // ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- SetCurrentState
 
 
-        public void AddTransition(T _aState, T _bState, System.Func<bool>[] _preReqs, System.Action _onTransition)
-        {
-            Transition transition = new Transition(_aState, _bState, _preReqs);
-            AddTransition(transition, _onTransition);
-        }
 
-
+        /// <summary>
+        /// Attempt to advance currentState from availableTransitions
+        /// </summary>
+        /// <returns>Returnes the currentState</returns>
         public T Update()
         {
+            // Initialize on first cycle
             if (!initialized) Initialize();
 
             bool canAnyTransition = true;
@@ -80,47 +130,85 @@
 
             if (CheckForAvailableTransition(out transition))
             {
-                MakeTransition(transition);
+                PreformTransition(transition);
             }
-            return _currentState;
+            return currentState;
         }
+        // ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- Update
 
 
 
-
+        /// <summary>
+        /// Initializes the SSM to populate availableTransitions
+        /// </summary>
         private void Initialize()
         {
-            SetCurrentState(_currentState);
+            SetCurrentState(currentState);
             initialized = true;
         }
+        // ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- Initialize
 
-        private void AddTransition(Transition _newTransition, System.Action _onTransition)
+        public void AddTransition(T a_aState, T a_bState, System.Func<bool>[] a_preReqs, System.Action a_onTransition)
         {
-            allTransitions.Add(_newTransition, _onTransition);
+            // Cannot transition TO and FROM the same state
+            if (a_aState.Equals(a_bState)) return;
+
+            Transition transition = new Transition(a_aState, a_bState, a_preReqs);
+            AddTransition(transition, a_onTransition);
         }
 
-        private void MakeTransition(Transition transition)
+        private void AddTransition(Transition a_newTransition, System.Action a_onTransition)
+        {
+            if (allTransitions.ContainsKey(a_newTransition)) return;
+            allTransitions.Add(a_newTransition, a_onTransition);
+        }
+
+        public void RemoveTransition(T a_aState, T a_bState)
+        {
+            Transition transition = new Transition(a_aState, a_bState, null);
+            RemoveTransition(transition);
+        }
+        private void RemoveTransition(Transition a_transition)
+        {
+            Transition transition = null;
+            foreach (Transition t in allTransitions.Keys)
+            {
+                if (t.Equals(a_transition))
+                {
+                    transition = t;
+                    break;
+                }
+            }
+            if (transition != null)
+            {
+                allTransitions.Remove(transition);
+            }
+        }
+
+        private void PreformTransition(Transition a_transition)
         {
             onAnyTransition?.Invoke();
-            SetCurrentState(transition.GetBState());
-            allTransitions[transition]?.Invoke();
+            SetCurrentState(a_transition.bState);
+            allTransitions[a_transition]?.Invoke();
         }
 
-        private bool CheckForAvailableTransition(out Transition validTransition)
+        private bool CheckForAvailableTransition(out Transition a_validTransition)
         {
+            a_validTransition = new Transition(anyState, anyState, null);
+
             foreach (Transition transition in availableTransitions)
             {
                 if (transition.CheckPrerequisites())
                 {
-                    validTransition = transition;
-                    return true;
+                    a_validTransition = transition.preReqCount > a_validTransition.preReqCount ? transition : a_validTransition;
                 }
             }
 
-            validTransition = null;
-            return false;
+            return !a_validTransition.aState.Equals(a_validTransition.bState);
         }
 
+        #endregion
+        // Methods \\  ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ----------
 
 
 
@@ -128,26 +216,20 @@
         //  ---------- ---------- ---------- ---------- ---------- ---------- ---------- ----------
         private sealed class Transition : System.IEquatable<Transition>
         {
-            private T aState;
-            public T GetAState()
-            {
-                return aState;
-            }
+            public T aState { get; private set; }
+            public T bState { get; private set; }
 
-            private T bState;
-            public T GetBState()
-            {
-                return bState;
-            }
 
             private System.Func<bool>[] preReqs;
+            public int preReqCount => preReqs != null ? preReqs.Length : 0;
 
-            public Transition(T _aState, T _bState, System.Func<bool>[] _preReqs)
+
+            public Transition(T a_aState, T a_bState, System.Func<bool>[] a_preReqs)
             {
-                aState = _aState;
-                bState = _bState;
+                aState = a_aState;
+                bState = a_bState;
 
-                preReqs = _preReqs;
+                preReqs = a_preReqs;
             }
 
             public bool CheckPrerequisites()
@@ -165,9 +247,9 @@
                 return passPreReqs;
             }
 
-            public bool Equals(Transition other)
+            public bool Equals(Transition a_other)
             {
-                return aState.Equals(other.aState) && bState.Equals(other.bState);
+                return aState.Equals(a_other.aState) && bState.Equals(a_other.bState);
             }
         }
 
