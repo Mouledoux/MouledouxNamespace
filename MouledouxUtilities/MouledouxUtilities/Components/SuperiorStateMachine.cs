@@ -3,26 +3,13 @@
     public sealed class SuperiorStateMachine<T>
     {
         private bool initialized = false;
-        
+
         private T _anyState;
-        
+
         private T _currentState;
         public T GetCurrentState()
         {
             return _currentState;
-        }
-        private void SetCurrentState(T newState)
-        {
-            _currentState = newState;
-            availableTransitions.Clear();
-
-            foreach (Transition t in allTransitions.Keys)
-            {
-                if (t.GetAState().Equals(newState) || t.GetAState().Equals(_anyState))
-                {
-                    availableTransitions.Add(t);
-                }
-            }
         }
 
 
@@ -32,44 +19,75 @@
         private System.Collections.Generic.List<Transition> availableTransitions =
             new System.Collections.Generic.List<Transition>();
 
-        
-        
-        
+        private Transition anyTransition;
+        private System.Action onAnyTransition;
+
+
         public SuperiorStateMachine(T initState, T anyState)
         {
             // You can't start in the AnyState
-            //if(initState.Equals(anyState))
-              //  Throw
-        
+            if (initState.Equals(anyState))
+            {
+                throw new System.NotSupportedException("The INIT, and the ANY state must be different");
+            }
+
             _currentState = initState;
             _anyState = anyState;
         }
-        
+
+
+        private void SetCurrentState(T newState)
+        {
+            _currentState = newState;
+            availableTransitions.Clear();
+
+            anyTransition = null;
+            onAnyTransition = null;
+
+            foreach (Transition t in allTransitions.Keys)
+            {
+                if ((t.GetAState().Equals(newState) || t.GetAState().Equals(_anyState)) && (!t.GetBState().Equals(_anyState)))
+                {
+                    availableTransitions.Add(t);
+                }
+                else if (t.GetAState().Equals(newState) && t.GetBState().Equals(_anyState))
+                {
+                    anyTransition = t;
+                    onAnyTransition = allTransitions[t];
+                }
+            }
+        }
+
+
         public void AddTransition(T _aState, T _bState, System.Func<bool>[] _preReqs, System.Action _onTransition)
         {
-            // You can't transition to AnyState, only from
-            //if(_bState.Equals(anyState))
-              //  Throw
-        
-            Transition Transition = new Transition(_aState, _bState, _preReqs);
-            AddTransition(Transition, _onTransition);
+            Transition transition = new Transition(_aState, _bState, _preReqs);
+            AddTransition(transition, _onTransition);
         }
-        
+
+
         public T Update()
         {
-            if(!initialized) Initialize();
-            
+            if (!initialized) Initialize();
+
+            bool canAnyTransition = true;
             Transition transition;
-            if(CheckForAvailableTransition(out transition))
-            {   
+
+            if (anyTransition != null)
+            {
+                canAnyTransition = anyTransition.CheckPrerequisites();
+            }
+
+            if (CheckForAvailableTransition(out transition))
+            {
                 MakeTransition(transition);
             }
             return _currentState;
         }
-        
-        
-        
-        
+
+
+
+
         private void Initialize()
         {
             SetCurrentState(_currentState);
@@ -83,8 +101,9 @@
 
         private void MakeTransition(Transition transition)
         {
+            onAnyTransition?.Invoke();
             SetCurrentState(transition.GetBState());
-            allTransitions[transition].Invoke();
+            allTransitions[transition]?.Invoke();
         }
 
         private bool CheckForAvailableTransition(out Transition validTransition)
@@ -97,7 +116,7 @@
                     return true;
                 }
             }
-            
+
             validTransition = null;
             return false;
         }
@@ -107,7 +126,7 @@
 
 
         //  ---------- ---------- ---------- ---------- ---------- ---------- ---------- ----------
-        private sealed class Transition
+        private sealed class Transition : System.IEquatable<Transition>
         {
             private T aState;
             public T GetAState()
@@ -144,6 +163,11 @@
                 }
 
                 return passPreReqs;
+            }
+
+            public bool Equals(Transition other)
+            {
+                return aState.Equals(other.aState) && bState.Equals(other.bState);
             }
         }
 
@@ -224,7 +248,7 @@
                 stateMachine.AddTransition(GhostStates.ANY, GhostStates.RESET, new System.Func<bool>[] { /*() => GameManager.GetState() == GameState.LEVEL_END,*/ }, null);
                 stateMachine.AddTransition(GhostStates.RESET, GhostStates.INIT, new System.Func<bool>[] { /*() => GameManager.GetState() == GameState.LEVEL_START,*/ }, null);
             }
-            
+
 
             void UpdateGhost()
             {
@@ -232,12 +256,12 @@
                 MoveToTargetPosition();
             }
 
-              
+
             void MoveToTargetPosition()
             {
                 // Move to targetPosX and targetPosY
             }
-            
+
 
             bool SetTargetTile(int x, int y)
             {
@@ -246,10 +270,10 @@
 
                 return currentPosX == targetPosX && currentPosY == targetPosY;
             }
-            
+
             void SetSpeed(float newSpeed)
             {
-                movementSpeed = newSpeed; 
+                movementSpeed = newSpeed;
             }
 
             public enum GhostStates
