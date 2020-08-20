@@ -94,13 +94,19 @@
 
             foreach (Transition t in allTransitions.Keys)
             {
-                // Add the transition if aState is currentState OR if aState is the anyState. Do not add if bState is the anyState
-                if ((t.aState.Equals(a_newState) || t.aState.Equals(anyState)) && (!t.bState.Equals(anyState)))
+                // aState is valid if it is the newState, OR if it is the anyState
+                bool aStateValid = t.aState.Equals(a_newState) || t.aState.Equals(anyState);
+                // bState is valid if it is NOT the anyState, NOR is it the newState
+                bool bStateValid = !t.bState.Equals(anyState) && !t.bState.Equals(a_newState);
+                // An 'any' transition is valid if aState is the newState, AND bState is the anyState
+                bool anyStateValid = t.aState.Equals(a_newState) && t.bState.Equals(anyState);
+                
+
+                if (aStateValid && bStateValid)
                 {
                     availableTransitions.Add(t);
                 }
-                // If the bState IS the anyState, set anyTransition
-                else if (t.aState.Equals(a_newState) && t.bState.Equals(anyState))
+                else if (anyStateValid)
                 {
                     anyTransition = t;
                     onAnyTransition = allTransitions[t];
@@ -114,7 +120,7 @@
         /// <summary>
         /// Attempt to advance currentState from availableTransitions
         /// </summary>
-        /// <returns>Returnes the currentState</returns>
+        /// <returns>Returns the currentState</returns>
         public T Update()
         {
             // Initialize on first cycle
@@ -128,7 +134,7 @@
                 canAnyTransition = anyTransition.CheckPrerequisites();
             }
 
-            if (CheckForAvailableTransition(out transition))
+            if (CheckForAvailableTransition(out transition) && canAnyTransition)
             {
                 PreformTransition(transition);
             }
