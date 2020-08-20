@@ -135,7 +135,7 @@
                 canAnyTransition = anyTransition.CheckPrerequisites();
             }
 
-            if (CheckForAvailableTransition(out transition) && canAnyTransition)
+            if (GetAvailableTransition(out transition) && canAnyTransition)
             {
                 PreformTransition(transition);
             }
@@ -158,7 +158,7 @@
 
 
         /// <summary>
-        /// Constructs a transition to be added to the state machine
+        /// Defines a transition to be added to the state machine
         /// </summary>
         /// <param name="a_aState">State the machine is transitioning OUT of</param>
         /// <param name="a_bState">State the machine is transitioning IN to</param>
@@ -190,7 +190,6 @@
         /// </returns>
         private int AddTransition(Transition a_newTransition, System.Action a_onTransition)
         {
-            // Cannot transition TO and FROM the same state
             if (a_newTransition.aState.Equals(a_newTransition.bState)) return 1;
             if (allTransitions.ContainsKey(a_newTransition)) return 2;
             allTransitions.Add(a_newTransition, a_onTransition);
@@ -200,6 +199,11 @@
 
 
 
+        /// <summary>
+        /// Defines a transition to be removed from the state machine
+        /// </summary>
+        /// <param name="a_aState">State A of the transition to be removed</param>
+        /// <param name="a_bState">State B of the transition to be removed</param>
         public void RemoveTransition(T a_aState, T a_bState)
         {
             Transition transition = new Transition(a_aState, a_bState, null);
@@ -209,6 +213,10 @@
 
 
 
+        /// <summary>
+        /// Removes a defined transition from the state machine
+        /// </summary>
+        /// <param name="a_transition">Transition to be removed</param>
         private void RemoveTransition(Transition a_transition)
         {
             Transition transition = null;
@@ -227,14 +235,32 @@
         }
         // ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- RemoveTransition (private)
 
+
+
+        /// <summary>
+        /// Preforms a transition, valid or not, and advances the machine to the new state
+        /// </summary>
+        /// <param name="a_transition">Transition to be preformed</param>
         private void PreformTransition(Transition a_transition)
         {
             onAnyTransition?.Invoke();
             SetCurrentState(a_transition.bState);
             allTransitions[a_transition]?.Invoke();
         }
+        // ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- PreformTransition
 
-        private bool CheckForAvailableTransition(out Transition a_validTransition)
+
+
+        /// <summary>
+        /// Checks all the requirements for all availableTransitions, and 'outs' one if all preReqs return true
+        /// In the event multiple transitions meet requirements, the one with the most preReqs takes priority
+        /// </summary>
+        /// <param name="a_validTransition">An empty transition to be populated should a valid transition be available</param>
+        /// <returns>
+        /// true = a transition is available and has ben set to the 'out'
+        /// false = no transition has met the preReqs and will not be set to 'out'
+        /// </returns>
+        private bool GetAvailableTransition(out Transition a_validTransition)
         {
             a_validTransition = new Transition(anyState, anyState, null);
 
@@ -248,6 +274,8 @@
 
             return !a_validTransition.aState.Equals(a_validTransition.bState);
         }
+        // ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- GetAvailableTransition
+
 
         #endregion
         // Methods \\  ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ----------
@@ -255,7 +283,13 @@
 
 
 
-        //  ---------- ---------- ---------- ---------- ---------- ---------- ---------- ----------
+        // Transition class // ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ----------
+        #region Transition
+
+
+        /// <summary>
+        /// Container for state transitons and their required conditions
+        /// </summary>
         private sealed class Transition : System.IEquatable<Transition>
         {
             public T aState { get; private set; }
@@ -294,6 +328,9 @@
                 return aState.Equals(a_other.aState) && bState.Equals(a_other.bState);
             }
         }
+
+        #endregion
+        // Transition class \\ ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ----------
 
 
 
