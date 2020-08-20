@@ -80,6 +80,7 @@
         // ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- SuperiorStateMachine
 
 
+
         /// <summary>
         /// Sets the currentState, and populates the availableTransitions FROM currentState
         /// </summary>
@@ -154,26 +155,60 @@
         }
         // ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- Initialize
 
-        public void AddTransition(T a_aState, T a_bState, System.Func<bool>[] a_preReqs, System.Action a_onTransition)
+
+
+        /// <summary>
+        /// Constructs a transition to be added to the state machine
+        /// </summary>
+        /// <param name="a_aState">State the machine is transitioning OUT of</param>
+        /// <param name="a_bState">State the machine is transitioning IN to</param>
+        /// <param name="a_preReqs">Requirements for the transition to happen</param>
+        /// <param name="a_onTransition">Action to preform on successful transition</param>
+        /// <returns>
+        /// 0 = the transition was valid and has been added to the machine
+        /// 1 = the transition has matching A and B states and will NOT be added
+        /// 2 = the transitions from A to B already exist and will NOT be added
+        /// </returns>
+        public int AddTransition(T a_aState, T a_bState, System.Func<bool>[] a_preReqs, System.Action a_onTransition)
+        {
+            Transition transition = new Transition(a_aState, a_bState, a_preReqs);
+            return AddTransition(transition, a_onTransition);
+        }
+        // ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- AddTransition (public)
+
+
+
+        /// <summary>
+        /// Adds a defined transition to the state machine
+        /// </summary>
+        /// <param name="a_newTransition">Transition to be added</param>
+        /// <param name="a_onTransition">Action to preform on successful transition</param>
+        /// <returns>
+        /// 0 = the transition was valid and has been added to the machine
+        /// 1 = the transition has matching A and B states and will NOT be added
+        /// 2 = the transitions from A to B already exist and will NOT be added
+        /// </returns>
+        private int AddTransition(Transition a_newTransition, System.Action a_onTransition)
         {
             // Cannot transition TO and FROM the same state
-            if (a_aState.Equals(a_bState)) return;
-
-            Transition transition = new Transition(a_aState, a_bState, a_preReqs);
-            AddTransition(transition, a_onTransition);
-        }
-
-        private void AddTransition(Transition a_newTransition, System.Action a_onTransition)
-        {
-            if (allTransitions.ContainsKey(a_newTransition)) return;
+            if (a_newTransition.aState.Equals(a_newTransition.bState)) return 1;
+            if (allTransitions.ContainsKey(a_newTransition)) return 2;
             allTransitions.Add(a_newTransition, a_onTransition);
+            return 0;
         }
+        // ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- AddTransition (private)
+
+
 
         public void RemoveTransition(T a_aState, T a_bState)
         {
             Transition transition = new Transition(a_aState, a_bState, null);
             RemoveTransition(transition);
         }
+        // ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- RemoveTransition (public)
+
+
+
         private void RemoveTransition(Transition a_transition)
         {
             Transition transition = null;
@@ -190,6 +225,7 @@
                 allTransitions.Remove(transition);
             }
         }
+        // ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- RemoveTransition (private)
 
         private void PreformTransition(Transition a_transition)
         {
