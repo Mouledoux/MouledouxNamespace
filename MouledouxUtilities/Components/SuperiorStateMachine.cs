@@ -244,9 +244,9 @@
         /// <param name="a_transition">Transition to be preformed</param>
         private void PreformTransition(Transition a_transition)
         {
+            allTransitions[a_transition]?.Invoke();
             onAnyTransition?.Invoke();
             SetCurrentState(a_transition.bState);
-            allTransitions[a_transition]?.Invoke();
         }
         // ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- PreformTransition
 
