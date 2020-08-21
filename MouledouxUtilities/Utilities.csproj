@@ -38,6 +38,8 @@
     <Compile Include="Components\FiniteStateMachine.cs" />
     <Compile Include="Components\Mediator.cs" />
     <Compile Include="Components\SuperiorStateMachine.cs" />
+    <Compile Include="Node\Node.cs" />
+    <Compile Include="Node\NodeNav.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
