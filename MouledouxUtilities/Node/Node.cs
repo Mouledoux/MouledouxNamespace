@@ -4,7 +4,8 @@ using System.Collections.Generic;
 namespace Mouledoux.Node
 {
     public class Node
-    {    private List<Node> m_neighbors;
+    {
+        private List<Node> m_neighbors;
         private List<object> m_information;
 
         public Node()
