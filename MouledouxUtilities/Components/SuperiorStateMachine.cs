@@ -159,6 +159,29 @@
 
 
         /// <summary>
+        /// Gets all possible B states from valid transition with given A State
+        /// </summary>
+        /// <param name="a_aState">A state of transitions to check</param>
+        /// <returns>Returns an array of B states</returns>
+        public T[] GetTransitionBStates(T a_aState)
+        {
+            System.Collections.Generic.List<T> returnList =
+                new System.Collections.Generic.List<T>();
+
+            foreach(Transition t in allTransitions)
+            {
+                if(t.aState.Equals(a_aState))
+                {
+                    returnList.Add(t.bState);
+                }
+            }
+
+            return returnList.ToArray();
+        }
+        // ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- GetTransitionBStates
+
+
+        /// <summary>
         /// Defines a transition to be added to the state machine
         /// </summary>
         /// <param name="a_aState">State the machine is transitioning OUT of</param>
