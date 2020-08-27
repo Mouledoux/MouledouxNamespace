@@ -180,6 +180,28 @@
         }
         // ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- GetTransitionBStates
 
+        /// <summary>
+        /// Gets all possible A states from valid transition with given B State
+        /// </summary>
+        /// <param name="a_BState">B state of transitions to check</param>
+        /// <returns>Returns an array of A states</returns>
+        public T[] GetTransitionAStates(T a_bState)
+        {
+            System.Collections.Generic.List<T> returnList =
+                new System.Collections.Generic.List<T>();
+
+            foreach (Transition t in allTransitions)
+            {
+                if (t.bState.Equals(a_bState))
+                {
+                    returnList.Add(t.aState);
+                }
+            }
+
+            return returnList.ToArray();
+        }
+        // ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- GetTransitionAStates
+
 
 
         /// <summary>
