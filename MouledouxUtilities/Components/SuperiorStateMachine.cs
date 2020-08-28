@@ -168,7 +168,7 @@
             System.Collections.Generic.List<T> returnList =
                 new System.Collections.Generic.List<T>();
 
-            foreach(Transition t in allTransitions)
+            foreach(Transition t in allTransitions.Keys)
             {
                 if(t.aState.Equals(a_aState))
                 {
@@ -190,7 +190,7 @@
             System.Collections.Generic.List<T> returnList =
                 new System.Collections.Generic.List<T>();
 
-            foreach (Transition t in allTransitions)
+            foreach (Transition t in allTransitions.Keys)
             {
                 if (t.bState.Equals(a_bState))
                 {
