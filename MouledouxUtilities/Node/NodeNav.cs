@@ -15,11 +15,12 @@ namespace Mouledoux.Node
 
             if(dualSearch)
             {
-                Thread backwards = new Thread(() => SoloStar<T>(endNode, begNode, chainLocker, false, 0f, 1f));
-                backwards.Start();
+                Task backwards = Task.Run(() => SoloStar<T>(endNode, begNode, chainLocker, false, 0f, 1f));
             }
 
-            return SoloStar<T>(begNode, endNode, chainLocker);
+            Task<Stack<T>> forward = Task.Run(() => SoloStar<T>(begNode, endNode, chainLocker));
+
+            return forward.Result;
         }
 
 
