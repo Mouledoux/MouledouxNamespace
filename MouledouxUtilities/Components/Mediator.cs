@@ -18,6 +18,40 @@ namespace Mouledoux.Components
 
 
 
+        /// <summary>
+        /// Broadcast a message to potential subscribers
+        /// </summary>
+        /// <param name="a_message">message to broadcast</param>
+        /// <param name="a_args">arguments to pass to subscription callbacks</param>
+        /// <param name="a_holdMessage">if there are no active subscriptions, rebroadcast when one subscribes</param>param>
+        /// <param name="a_multiThread">should callbacks be preformed on other threads</param>
+        /// <returns></returns>
+        public static int NotifySubscribers(string a_message, object[] a_args = null, bool a_holdMessage = false, bool a_multiThread = false)
+        {
+            if(a_multiThread)
+            {
+                new Thread(() => NotifySubscribers(a_message, a_args, a_holdMessage)).Start();
+            }
+            else
+            {
+                NotifySubscribers(a_message, a_args, a_holdMessage);
+            }
+            return 0;
+        }
+
+
+
+        /// <summary>
+        /// Checks if a subscription message exist
+        /// </summary>
+        /// <param name="a_message">subscription message to check</param>
+        /// <returns>returns true if the message exist</returns>
+        public static bool CheckForSubscription(string a_message)
+        {
+            return m_orderedSubscriptions.ContainsKey(a_message);
+        }
+
+
 
 
         /// <summary>
@@ -27,10 +61,9 @@ namespace Mouledoux.Components
         /// <param name="a_args">arguments to pass to subscription callbacks</param>
         /// <param name="a_holdMessage">if there are no active subscriptions, rebroadcast when one subscribes</param>
         /// <returns></returns>
-        public static int NotifySubscribers(string a_message, object[] a_args = null, bool a_holdMessage = false)
+        private static int NotifySubscribers(string a_message, object[] a_args = null, bool a_holdMessage = false)
         {
             a_message = a_message.ToLower();
-
 
             // Makes sure the object array has been set to something, even if one isn't provideds
             a_args = a_args == null ? new object[0] : a_args;
@@ -48,18 +81,6 @@ namespace Mouledoux.Components
         }
 
 
-
-
-
-        /// <summary>
-        /// Checks if a subscription message exist
-        /// </summary>
-        /// <param name="a_message">subscription message to check</param>
-        /// <returns>returns true if the message exist</returns>
-        public static bool CheckForSubscription(string a_message)
-        {
-            return m_orderedSubscriptions.ContainsKey(a_message);
-        }
 
 
         /// <summary>
@@ -144,7 +165,7 @@ namespace Mouledoux.Components
             {
                 foreach (Subscription sub in a_container[a_message])
                 {
-                    new Thread(() => sub.m_callback.Invoke(a_args)).Start();
+                    sub.m_callback.Invoke(a_args);
                 }
                 return true;
             }
