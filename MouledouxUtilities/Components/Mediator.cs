@@ -30,7 +30,7 @@ namespace Mouledoux.Components
         {
             if(a_multiThread)
             {
-                new Thread(() => NotifySubscribers(a_message, a_args, a_holdMessage)).Start();
+                ThreadPool.QueueUserWorkItem((object a) => NotifySubscribers(a_message, a_args, a_holdMessage));
             }
             else
             {
@@ -265,13 +265,13 @@ namespace Mouledoux.Components
 
             public Subscription Subscribe(bool a_acceptStaleMessages = false)
             {
-                new Thread(() => Mediator.Subscribe(ref m_orderedSubscriptions, this, a_acceptStaleMessages)).Start();    
+                ThreadPool.QueueUserWorkItem((object a) => Mediator.Subscribe(ref m_orderedSubscriptions, this, a_acceptStaleMessages));    
                 return this;
             }
 
             public void Unsubscribe()
             {
-                new Thread(() => Mediator.Unsubscribe(ref m_orderedSubscriptions, this)).Start();
+                ThreadPool.QueueUserWorkItem((object a) => Mediator.Unsubscribe(ref m_orderedSubscriptions, this));
             }
 
             public int CompareTo(Subscription sub)
