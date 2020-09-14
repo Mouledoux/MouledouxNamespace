@@ -1,4 +1,5 @@
 ﻿using System.Threading;
+using System.Threading.Tasks;
 using System.Collections.Generic;
 
 namespace Mouledoux.Components
@@ -28,14 +29,20 @@ namespace Mouledoux.Components
         /// <returns></returns>
         public static int NotifySubscribers(string a_message, object[] a_args = null, bool a_holdMessage = false, bool a_multiThread = false)
         {
-            if(a_multiThread)
+            Task notifyTask = new Task( () =>
+                NotifySubscribers(a_message, a_args, a_holdMessage));
+
+            if (a_multiThread)
             {
-                ThreadPool.QueueUserWorkItem((object a) => NotifySubscribers(a_message, a_args, a_holdMessage));
+                notifyTask.Start();
             }
+
             else
             {
-                NotifySubscribers(a_message, a_args, a_holdMessage);
+                notifyTask.RunSynchronously();
+                notifyTask.Wait();
             }
+            
             return 0;
         }
 
@@ -265,13 +272,16 @@ namespace Mouledoux.Components
 
             public Subscription Subscribe(bool a_acceptStaleMessages = false)
             {
-                ThreadPool.QueueUserWorkItem((object a) => Mediator.Subscribe(ref m_orderedSubscriptions, this, a_acceptStaleMessages));    
+                Task subTask = Task.Run( () =>
+                    Mediator.Subscribe(ref m_orderedSubscriptions, this, a_acceptStaleMessages));
+                
                 return this;
             }
 
             public void Unsubscribe()
             {
-                ThreadPool.QueueUserWorkItem((object a) => Mediator.Unsubscribe(ref m_orderedSubscriptions, this));
+                Task unsubTask = Task.Run( () =>
+                    Mediator.Unsubscribe(ref m_orderedSubscriptions, this));
             }
 
             public int CompareTo(Subscription sub)
