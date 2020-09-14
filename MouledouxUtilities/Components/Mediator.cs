@@ -240,7 +240,11 @@ namespace Mouledoux.Components
             public int m_priority
             {
                 get => _priority;
-                set => _priority = value;
+                set
+                {
+                    _priority = value;
+                    m_orderedSubscriptions[m_message].Sort();
+                }
             }
 
             public Subscription(string a_message, System.Action<object[]> a_callback, int a_priority = 0)
