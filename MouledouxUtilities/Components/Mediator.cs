@@ -16,36 +16,7 @@ namespace Mouledoux.Components
         /// Messages that had no subscriptions at broadcast, but were marked for hold
         /// </summary>
         private static List<string> m_staleMessages = new List<string>();
-
-
-
-        /// <summary>
-        /// Broadcast a message to potential subscribers
-        /// </summary>
-        /// <param name="a_message">message to broadcast</param>
-        /// <param name="a_args">arguments to pass to subscription callbacks</param>
-        /// <param name="a_holdMessage">if there are no active subscriptions, rebroadcast when one subscribes</param>param>
-        /// <param name="a_multiThread">should callbacks be preformed on other threads</param>
-        /// <returns></returns>
-        public static int NotifySubscribers(string a_message, object[] a_args = null, bool a_holdMessage = false, bool a_multiThread = false)
-        {
-            Task notifyTask = new Task( () =>
-                NotifySubscribers(a_message, a_args, a_holdMessage));
-
-            if (a_multiThread)
-            {
-                notifyTask.Start();
-            }
-
-            else
-            {
-                notifyTask.RunSynchronously();
-                notifyTask.Wait();
-            }
-            
-            return 0;
-        }
-
+        
 
 
         /// <summary>
@@ -67,8 +38,7 @@ namespace Mouledoux.Components
         /// <param name="a_message">message to broadcast</param>
         /// <param name="a_args">arguments to pass to subscription callbacks</param>
         /// <param name="a_holdMessage">if there are no active subscriptions, rebroadcast when one subscribes</param>
-        /// <returns></returns>
-        private static int NotifySubscribers(string a_message, object[] a_args = null, bool a_holdMessage = false)
+        public static void NotifySubscribers(string a_message, object[] a_args = null, bool a_holdMessage = false)
         {
             a_message = a_message.ToLower();
 
@@ -83,10 +53,20 @@ namespace Mouledoux.Components
                 // add it to the hold list
                 m_staleMessages.Add(a_message);
             }
-
-            return 0;
         }
 
+
+        /// <summary>
+        /// Broadcast a message to potential subscribers, and invokes callbacks on a seperate thread
+        /// </summary>
+        /// <param name="a_message">message to broadcast</param>
+        /// <param name="a_args">arguments to pass to subscription callbacks</param>
+        /// <param name="a_holdMessage">if there are no active subscriptions, rebroadcast when one subscribes</param>
+        public static void NotifySubscribersAsync(string a_message, object[] a_args = null, bool a_holdMessage = false)
+        {
+            Task notifyTask = Task.Run(() =>
+               NotifySubscribers(a_message, a_args, a_holdMessage));
+        }
 
 
 
