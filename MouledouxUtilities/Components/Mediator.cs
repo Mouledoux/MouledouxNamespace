@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System.Threading;
+using System.Collections.Generic;
 
 namespace Mouledoux.Components
 {
@@ -143,7 +144,7 @@ namespace Mouledoux.Components
             {
                 foreach (Subscription sub in a_container[a_message])
                 {
-                    sub.m_callback.Invoke(a_args);
+                    new Thread(() => sub.m_callback.Invoke(a_args)).Start();
                 }
                 return true;
             }
@@ -243,13 +244,13 @@ namespace Mouledoux.Components
 
             public Subscription Subscribe(bool a_acceptStaleMessages = false)
             {
-                Mediator.Subscribe(ref m_orderedSubscriptions, this, a_acceptStaleMessages);
+                new Thread(() => Mediator.Subscribe(ref m_orderedSubscriptions, this, a_acceptStaleMessages)).Start();    
                 return this;
             }
 
             public void Unsubscribe()
             {
-                Mediator.Unsubscribe(ref m_orderedSubscriptions, this);
+                new Thread(() => Mediator.Unsubscribe(ref m_orderedSubscriptions, this)).Start();
             }
 
             public int CompareTo(Subscription sub)
