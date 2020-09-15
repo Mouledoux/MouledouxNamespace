@@ -1,44 +1,9 @@
-﻿using System.Threading;
+﻿using System;
 using System.Threading.Tasks;
 using System.Collections.Generic;
 
 namespace Mouledoux.Mediation.Components
 {
-    //public static class MediatorMediator
-    //{
-    //    private static Dictionary<string, HashSet<System.Type>> m_typedMessages =
-    //        new Dictionary<string, HashSet<System.Type>>();
-
-    //    public static void Subscribe<T>(string a_message, System.Action<T> a_callback, int a_priority = 0) where T : new()
-    //    {
-    //        System.Type type = typeof(T);
-
-    //        if(m_typedMessages.ContainsKey(a_message))
-    //        {
-    //            m_typedMessages[a_message].Add(type);
-    //        }
-    //        else
-    //        {
-    //            m_typedMessages.Add(a_message,
-    //                new HashSet<System.Type>() { typeof(object), type });
-    //        }
-    //    }
-
-    //    public static void NotifySubscribers<T>(string a_message, T a_arg) where T : new()
-    //    {
-    //        foreach(System.Type type in m_typedMessages[a_message])
-    //        {
-    //            if (type is T)
-    //            {
-    //                Mediator<T>.NotifySubscribers(a_message, (T)a_arg);
-    //            }
-    //        }
-    //    }
-    //}
-
-
-
-
     public static class Catalogue<T>
     {
         /// <summary>
@@ -46,16 +11,12 @@ namespace Mouledoux.Mediation.Components
         /// </summary>
         private static Dictionary<string, List<Subscription>> m_subscriptions =
             new Dictionary<string, List<Subscription>>();
-
-        private static Dictionary<string, HashSet<System.Type>> m_typedMessages =
-            new Dictionary<string, HashSet<System.Type>>();
-
-
+        
         /// <summary>
         /// Messages that had no subscriptions at broadcast, but were marked for hold
         /// </summary>
         private static List<string> m_staleMessages = new List<string>();
-        
+
 
 
 
@@ -80,7 +41,7 @@ namespace Mouledoux.Mediation.Components
         {
             a_message = a_message.ToLower();
 
-            bool messageBroadcasted = TryInvokeSubscription(ref m_subscriptions, a_message, a_arg);
+            bool messageBroadcasted = TryInvokeSubscription(a_message, a_arg);
 
             // If nothing is listening to the message, but it's been marked to hold
             if (!messageBroadcasted && a_holdMessage && !m_staleMessages.Contains(a_message))
@@ -111,15 +72,12 @@ namespace Mouledoux.Mediation.Components
         /// Checks subscription associated callbacks for null ref errors
         /// Removes any that are not validated
         /// </summary>
-        /// <param name="a_container">message subscription dictionary</param>
         /// <param name="a_message">message to validate callbacks under</param>
         /// <returns>return true if valid callbacks >= 1</returns>
-        private static bool ValidateSubscriptionCallbacks(ref Dictionary<string, List<Subscription>> a_container, string a_message)
+        private static bool ValidateSubscriptionCallbacks(string a_message)
         {
-            List<Subscription> tSub;
-
             // get all the subscriptions to a single message
-            if (a_container.TryGetValue(a_message, out tSub))
+            if (m_subscriptions.TryGetValue(a_message, out List<Subscription> tSub))
             {
                 // for all the subs to the message
                 for (int i = 0; i < tSub.Count; i++)
@@ -127,30 +85,30 @@ namespace Mouledoux.Mediation.Components
                     try
                     {
                         // and for each action in each sub
-                        foreach (System.Action<T> del in tSub[i].m_callback.GetInvocationList())
+                        foreach (Action<T> del in tSub[i].Callback.GetInvocationList())
                         {
                             // if the action has no valid targets, remove it
-                            tSub[i].m_callback -= del.Target.Equals(null) ? del : default;
+                            tSub[i].Callback -= del.Target.Equals(null) ? del : default;
                         }
 
                         // if there are no actions left on the sub
-                        if (tSub[i].m_callback == null)
+                        if (tSub[i].Callback == null)
                         {
                             // remove the sub from the mesasge
                             // and accomidate for the sub list loosing 1
-                            a_container[a_message].RemoveAt(i);
+                            m_subscriptions[a_message].RemoveAt(i);
                             i--;
                         }
 
                         else
                         {
                             // apply the remang actions to the sub
-                            a_container[a_message][i] = tSub[i];
+                            m_subscriptions[a_message][i] = tSub[i];
                         }
                     }
 
                     // catch if the sub trigger a null ref
-                    catch (System.NullReferenceException)
+                    catch (NullReferenceException)
                     {
                         // remove it completely
                         // and accomidate for sub list loosing 1
@@ -160,14 +118,14 @@ namespace Mouledoux.Mediation.Components
                 }
 
                 // return true if the message has any remaining valid subs
-                if (a_container[a_message].Count > 0)
+                if (m_subscriptions[a_message].Count > 0)
                 {
                     return true;
                 }
                 // else, remove the message subscription
                 else
                 {
-                    a_container.Remove(a_message);
+                    m_subscriptions.Remove(a_message);
                 }
             }
 
@@ -179,17 +137,16 @@ namespace Mouledoux.Mediation.Components
         /// <summary>
         /// Invokes all valid callbacks subscribed to a message
         /// </summary>
-        /// <param name="a_container">message subscription dictionary</param>
         /// <param name="a_message">message to be broadcasted</param>
         /// <param name="a_args">arguments to pass to the callback</param>
         /// <returns>returns true if the broadcast was successful</returns>
-        private static bool TryInvokeSubscription(ref Dictionary<string, List<Subscription>> a_container, string a_message, T a_arg)
+        private static bool TryInvokeSubscription(string a_message, T a_arg)
         {
-            if (ValidateSubscriptionCallbacks(ref a_container, a_message))
+            if (ValidateSubscriptionCallbacks(a_message))
             {
-                foreach (Subscription sub in a_container[a_message])
+                foreach (Subscription sub in m_subscriptions[a_message])
                 {
-                    sub.m_callback.Invoke(a_arg);
+                    sub.Callback.Invoke(a_arg);
                 }
                 return true;
             }
@@ -203,55 +160,52 @@ namespace Mouledoux.Mediation.Components
 
 
 
-        private static void Subscribe(ref Dictionary<string, List<Subscription>> a_container, string a_message, System.Action<T> a_callback, int a_priority = 0)
+        private static void Subscribe(string a_message, Action<T> a_callback, int a_priority = 0)
         {
             a_message = a_message.ToLower();
 
             Subscription sub = new Subscription(a_message, a_callback, a_priority);
-            Subscribe(ref a_container, sub);
+            Subscribe(sub);
         }
 
 
-        private static void Subscribe(ref Dictionary<string, List<Subscription>> a_container, Subscription a_sub, bool a_acceptStaleMesages = false)
+        private static void Subscribe(Subscription a_sub, bool a_acceptStaleMesages = false)
         {
-            string message = a_sub.m_message.ToLower();
-            List<Subscription> tSub;
+            string message = a_sub.Message.ToLower();
 
-            if (!a_container.TryGetValue(message, out tSub))
+            if (!m_subscriptions.TryGetValue(message, out List<Subscription> tSub))
             {
                 tSub = new List<Subscription>();
-                a_container.Add(message, tSub);
+                m_subscriptions.Add(message, tSub);
 
                 if (a_acceptStaleMesages && m_staleMessages.Contains(message))
                 {
                     m_staleMessages.Remove(message);
-                    a_sub.m_callback.Invoke(default);
+                    a_sub.Callback.Invoke(default);
                 }
             }
 
             tSub.Add(a_sub);
-            a_container[message] = tSub;
-            a_container[message].Sort();
+            m_subscriptions[message] = tSub;
+            m_subscriptions[message].Sort();
         }
 
 
-        private static void Unsubscribe(ref Dictionary<string, List<Subscription>> a_container, Subscription a_sub)
+        private static void Unsubscribe(Subscription a_sub)
         {
-            string message = a_sub.m_message.ToLower();
+            string message = a_sub.Message.ToLower();
 
-            List<Subscription> tSub;
-
-            if (a_container.TryGetValue(message, out tSub))
+            if (m_subscriptions.TryGetValue(message, out List<Subscription> tSub))
             {
                 tSub.Remove(a_sub);
 
                 if (tSub.Count == 0)
                 {
-                    a_container.Remove(message);
+                    m_subscriptions.Remove(message);
                 }
                 else
                 {
-                    a_container[message] = tSub;
+                    m_subscriptions[message] = tSub;
                 }
             }
         }
@@ -260,13 +214,13 @@ namespace Mouledoux.Mediation.Components
 
 
 
-        public sealed class Subscription : System.IComparable<Subscription>
+        public sealed class Subscription : IComparable<Subscription>
         {
             private string _message;
             private int _priority;
-            public System.Action<T> m_callback;
+            private Action<T> _callback;
 
-            public string m_message
+            public string Message
             {
                 get => _message;
                 set
@@ -277,40 +231,46 @@ namespace Mouledoux.Mediation.Components
                 }
             }
 
-            public int m_priority
+            public int Priority
             {
                 get => _priority;
                 set
                 {
                     _priority = value;
-                    m_subscriptions[m_message].Sort();
+                    m_subscriptions[Message].Sort();
                 }
             }
 
-            public Subscription(string a_message, System.Action<T> a_callback, int a_priority = 0)
+            public Action<T> Callback
+            {
+                get => _callback;
+                set => _callback = value;
+            }
+
+            public Subscription(string a_message, Action<T> a_callback, int a_priority = 0)
             {
                 _message = a_message;
                 _priority = a_priority;
-                m_callback = a_callback;
+                _callback = a_callback;
             }
 
             public Subscription Subscribe(bool a_acceptStaleMessages = false)
             {
-                Task subTask = Task.Run( () =>
-                    Catalogue<T>.Subscribe(ref m_subscriptions, this, a_acceptStaleMessages));
-                
+                Task subTask = Task.Run(() =>
+                   Catalogue<T>.Subscribe(this, a_acceptStaleMessages));
+
                 return this;
             }
 
             public void Unsubscribe()
             {
-                Task unsubTask = Task.Run( () =>
-                    Catalogue<T>.Unsubscribe(ref m_subscriptions, this));
+                Task unsubTask = Task.Run(() =>
+                   Catalogue<T>.Unsubscribe(this));
             }
 
             public int CompareTo(Subscription sub)
             {
-                return sub.m_priority - m_priority;
+                return sub.Priority - Priority;
             }
         }
     }
