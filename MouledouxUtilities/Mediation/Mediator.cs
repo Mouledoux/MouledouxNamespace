@@ -10,22 +10,22 @@ namespace Mouledoux.Mediation.Systems
         private static Dictionary<string, HashSet<Type>> m_typedMessages =
             new Dictionary<string, HashSet<Type>>();
 
-        public static void NotifySubscribers<T>(string a_message, T a_arg, bool a_holdMessage = false) where T : new()
+        public static void NotifySubscribers<T>(string a_message, T a_arg, bool a_holdMessage = false)
         {
             TryAddTypedMessage(a_message, typeof(T));
 
             foreach (Type type in m_typedMessages[a_message])
             {
-                if (type is T)
+                if (type == typeof(T))
                 {
-                    typeof(Catalogue<T>).MakeGenericType(new Type[] { type }).
+                    typeof(Catalogue<>).MakeGenericType(new Type[] { type }).
                         GetMethod("NotifySubscribers").Invoke(null,
                             new object[] { a_message, a_arg, a_holdMessage });
                 }
             }
         }
 
-        public static void NotifySubscribersAsync<T>(string a_message, T a_arg, bool a_holdMessage = false) where T : new()
+        public static void NotifySubscribersAsync<T>(string a_message, T a_arg, bool a_holdMessage = false)
         {
             Task notifyTask = Task.Run(() =>
                NotifySubscribers(a_message, a_arg, a_holdMessage));
