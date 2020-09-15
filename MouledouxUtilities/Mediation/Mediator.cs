@@ -4,39 +4,42 @@ using System.Collections.Generic;
 
 namespace Mouledoux.Components
 {
-    public static class Mediator
-    {
-        private static Dictionary<string, HashSet<System.Type>> m_typedMessages =
-            new Dictionary<string, HashSet<System.Type>>();
+    //public static class MediatorMediator
+    //{
+    //    private static Dictionary<string, HashSet<System.Type>> m_typedMessages =
+    //        new Dictionary<string, HashSet<System.Type>>();
 
-        public static void Subscribe<T>(string a_message) where T : new()
-        {
-            System.Type type = typeof(T);
+    //    public static void Subscribe<T>(string a_message, System.Action<T> a_callback, int a_priority = 0) where T : new()
+    //    {
+    //        System.Type type = typeof(T);
 
-            if(m_typedMessages.ContainsKey(a_message))
-            {
-                m_typedMessages[a_message].Add(type);
-            }
-            else
-            {
-                m_typedMessages.Add(a_message,
-                    new HashSet<System.Type>() { typeof(object), type });
-            }
-        }
+    //        if(m_typedMessages.ContainsKey(a_message))
+    //        {
+    //            m_typedMessages[a_message].Add(type);
+    //        }
+    //        else
+    //        {
+    //            m_typedMessages.Add(a_message,
+    //                new HashSet<System.Type>() { typeof(object), type });
+    //        }
+    //    }
 
-        public static void NotifySubscribers<T>(string a_message, T a_arg) where T : new()
-        {
-            foreach(System.Type type in m_typedMessages[a_message])
-            {
-                if (type is T)
-                {
-                    TypedMediator<T>.NotifySubscribers(a_message, (T)a_arg);
-                }
-            }
-        }
-    }
+    //    public static void NotifySubscribers<T>(string a_message, T a_arg) where T : new()
+    //    {
+    //        foreach(System.Type type in m_typedMessages[a_message])
+    //        {
+    //            if (type is T)
+    //            {
+    //                Mediator<T>.NotifySubscribers(a_message, (T)a_arg);
+    //            }
+    //        }
+    //    }
+    //}
 
-    public static class TypedMediator<T>
+
+
+
+    public static class Catalogue<T>
     {
         /// <summary>
         /// Messages and their associated subscriptions
@@ -44,11 +47,16 @@ namespace Mouledoux.Components
         private static Dictionary<string, List<Subscription>> m_subscriptions =
             new Dictionary<string, List<Subscription>>();
 
+        private static Dictionary<string, HashSet<System.Type>> m_typedMessages =
+            new Dictionary<string, HashSet<System.Type>>();
+
+
         /// <summary>
         /// Messages that had no subscriptions at broadcast, but were marked for hold
         /// </summary>
         private static List<string> m_staleMessages = new List<string>();
         
+
 
 
         /// <summary>
@@ -60,8 +68,6 @@ namespace Mouledoux.Components
         {
             return m_subscriptions.ContainsKey(a_message);
         }
-
-
 
 
         /// <summary>
@@ -96,6 +102,8 @@ namespace Mouledoux.Components
             Task notifyTask = Task.Run(() =>
                NotifySubscribers(a_message, a_arg, a_holdMessage));
         }
+
+
 
 
 
@@ -192,6 +200,9 @@ namespace Mouledoux.Components
         }
 
 
+
+
+
         private static void Subscribe(ref Dictionary<string, List<Subscription>> a_container, string a_message, System.Action<T> a_callback, int a_priority = 0)
         {
             a_message = a_message.ToLower();
@@ -286,7 +297,7 @@ namespace Mouledoux.Components
             public Subscription Subscribe(bool a_acceptStaleMessages = false)
             {
                 Task subTask = Task.Run( () =>
-                    TypedMediator<T>.Subscribe(ref m_subscriptions, this, a_acceptStaleMessages));
+                    Mediator<T>.Subscribe(ref m_subscriptions, this, a_acceptStaleMessages));
                 
                 return this;
             }
@@ -294,7 +305,7 @@ namespace Mouledoux.Components
             public void Unsubscribe()
             {
                 Task unsubTask = Task.Run( () =>
-                    TypedMediator<T>.Unsubscribe(ref m_subscriptions, this));
+                    Mediator<T>.Unsubscribe(ref m_subscriptions, this));
             }
 
             public int CompareTo(Subscription sub)
