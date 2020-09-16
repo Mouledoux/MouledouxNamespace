@@ -94,6 +94,26 @@ namespace Mouledoux.Mediation.Components
         /// <returns>return true if valid callbacks >= 1</returns>
         private static bool ValidateSubscriptionCallbacks(string a_message)
         {
+            if (m_subscriptions.ContainsKey(a_message))
+            {
+                RemoveCorruptSubscriptions(a_message);
+
+                if (m_subscriptions[a_message].Count > 0)
+                {
+                    return true;
+                }
+                else
+                {
+                    RemoveSubscriptionMessage(a_message);
+                }
+            }
+            return false;
+        }
+
+
+        // A 'corrupted' sub, is a sub with a null target object
+        private static void RemoveCorruptSubscriptions(string a_message)
+        {
             if (m_subscriptions.TryGetValue(a_message, out List<Subscription> tSub))
             {
                 for (int i = 0; i < tSub.Count; i++)
@@ -116,34 +136,29 @@ namespace Mouledoux.Mediation.Components
                             m_subscriptions[a_message][i] = tSub[i];
                         }
                     }
-
+                    
                     catch (NullReferenceException)
                     {
                         tSub.RemoveAt(i);
                         i--;
                     }
                 }
-
-                if (m_subscriptions[a_message].Count > 0)
-                {
-                    return true;
-                }
-                else
-                {
-                    m_subscriptions.Remove(a_message);
-
-                    if (m_subscriptions.Count == 0)
-                    {
-
-                    }
-                }
             }
-            return false;
         }
 
-
-        private static void RemoveCorruptSubscriptions(string a_message)
+        
+        private static void RemoveSubscriptionMessage(string a_message)
         {
+            if (m_subscriptions.ContainsKey(a_message))
+            {
+                m_subscriptions.Remove(a_message);
+
+                if (m_subscriptions.Count == 0)
+                {
+                    // TODO:
+                    // Remove type from mediator
+                }
+            }
         }
 
 
