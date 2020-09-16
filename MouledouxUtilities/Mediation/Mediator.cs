@@ -21,7 +21,7 @@ namespace Mouledoux.Mediation
 
         public static void NotifySubscribers<T>(string a_message, T a_arg, bool a_holdMessage = false)
         {
-            TryAddTypedMessage(a_message, typeof(T));
+            TryAddTypedSubscription<T>(a_message);
 
             foreach (Type type in m_knownTranslations[a_message])
             {
@@ -37,13 +37,13 @@ namespace Mouledoux.Mediation
         }
 
 
-        public static void TryAddTypedMessage(string a_message, Type a_type)
+        public static void TryAddTypedSubscription<T>(string a_message)
         {
             if (!m_knownTranslations.ContainsKey(a_message))
             {
                 m_knownTranslations.Add(a_message, new HashSet<Type>() { typeof(object) });
             }
-            m_knownTranslations[a_message].Add(a_type);
+            m_knownTranslations[a_message].Add(typeof(T));
         }
 
 
