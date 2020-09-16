@@ -237,7 +237,7 @@ namespace Mouledoux.Mediation.Components
                 set
                 {
                     _priority = value;
-                    m_subscriptions[Message].Sort();
+                    Task resort = Task.Run(() => m_subscriptions[Message].Sort());
                 }
             }
 
@@ -262,8 +262,7 @@ namespace Mouledoux.Mediation.Components
 
             public void Unsubscribe()
             {
-                Task unsubTask = Task.Run(() =>
-                   Catalogue<T>.Unsubscribe(this));
+                Catalogue<T>.Unsubscribe(this);
             }
 
             public int CompareTo(Subscription sub)
