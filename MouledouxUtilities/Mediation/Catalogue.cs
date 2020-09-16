@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq;
 using System.Threading.Tasks;
 using System.Collections.Generic;
 
@@ -72,18 +73,17 @@ namespace Mouledoux.Mediation
         {
             if (ValidateSubscriptionCallbacks(a_message))
             {
-                foreach (Subscription sub in m_subscriptions[a_message])
+                return m_subscriptions[a_message].All(sub =>
                 {
                     sub.Callback.Invoke(a_arg);
-                }
-                return true;
+                    return true;
+                });
             }
             else
             {
                 return false;
             }
         }
-
 
 
         /// <summary>
@@ -157,6 +157,7 @@ namespace Mouledoux.Mediation
 
             return false;
         }
+
 
 
         private static void Subscribe(string a_message, Action<T> a_callback, int a_priority = 0)
