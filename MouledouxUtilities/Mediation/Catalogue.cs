@@ -98,14 +98,8 @@ namespace Mouledoux.Mediation.Components
             {
                 RemoveCorruptSubscriptions(a_message);
 
-                if (m_subscriptions[a_message].Count > 0)
-                {
-                    return true;
-                }
-                else
-                {
-                    RemoveSubscriptionMessage(a_message);
-                }
+                return m_subscriptions[a_message].Count > 0 ||
+                        !RemoveSubscriptionMessage(a_message);
             }
             return false;
         }
@@ -147,7 +141,7 @@ namespace Mouledoux.Mediation.Components
         }
 
         
-        private static void RemoveSubscriptionMessage(string a_message)
+        private static bool RemoveSubscriptionMessage(string a_message)
         {
             if (m_subscriptions.ContainsKey(a_message))
             {
@@ -158,7 +152,11 @@ namespace Mouledoux.Mediation.Components
                     // TODO:
                     // Remove type from mediator
                 }
+
+                return true;
             }
+
+            return false;
         }
 
 
