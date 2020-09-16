@@ -8,9 +8,14 @@ namespace Mouledoux.Mediation
 {
     public static class CatalogueTranslator
     {
-        private static Dictionary<string, HashSet<Type>> m_knownTranslations =
-            new Dictionary<string, HashSet<Type>>();
+        private static HashSet<Type> m_knownTypes = new HashSet<Type>() { typeof(object) };
+        private static Catalogue<Type>.Subscription removeTypeSub;
 
+        static CatalogueTranslator()
+        {
+            removeTypeSub = new Catalogue<Type>.Subscription("RemoveTypeFromTranslator",
+                (Type t) => m_knownTypes.Remove(t), 99).Subscribe();
+        }
 
         public static void NotifySubscribersAsync<T>(string a_message, T a_arg, bool a_holdMessage = false)
         {
@@ -23,7 +28,7 @@ namespace Mouledoux.Mediation
         {
             TryAddTypedSubscription<T>(a_message);
 
-            foreach (Type type in m_knownTranslations[a_message])
+            foreach (Type type in m_knownTypes)
             {
                 if (HasGetExplicitConversion(type, typeof(T), out MethodInfo o_implicit))
                 {
@@ -39,11 +44,7 @@ namespace Mouledoux.Mediation
 
         public static void TryAddTypedSubscription<T>(string a_message)
         {
-            if (!m_knownTranslations.ContainsKey(a_message))
-            {
-                m_knownTranslations.Add(a_message, new HashSet<Type>() { typeof(object) });
-            }
-            m_knownTranslations[a_message].Add(typeof(T));
+            m_knownTypes.Add(typeof(T));
         }
 
 

@@ -149,7 +149,7 @@ namespace Mouledoux.Mediation
 
                 if (m_subscriptions.Count == 0)
                 {
-                    // do something...
+                    Catalogue<Type>.NotifySubscribers("RemoveTypeFromTranslator", typeof(T));
                 }
 
                 return true;
@@ -197,7 +197,7 @@ namespace Mouledoux.Mediation
 
                 if (tSub.Count == 0)
                 {
-                    m_subscriptions.Remove(message);
+                    RemoveSubscriptionMessage(message);
                 }
                 else
                 {
