@@ -7,7 +7,7 @@ using Mouledoux.Mediation.Components;
 
 namespace Mouledoux.Mediation.Systems
 {
-    public static class Mediator
+    public static class TypedMediator
     {
         private static Dictionary<string, HashSet<Type>> m_typedMessages =
             new Dictionary<string, HashSet<Type>>();
@@ -18,7 +18,7 @@ namespace Mouledoux.Mediation.Systems
 
             foreach (Type type in m_typedMessages[a_message])
             {
-                if (HasGetImplicitConversion(type, typeof(T), out MethodInfo o_implicit))
+                if (HasGetExplicitConversion(type, typeof(T), out MethodInfo o_implicit))
                 {
                     Type thisType = typeof(Catalogue<>).MakeGenericType(new Type[] { type });
                     MethodInfo typedMethod = thisType.GetMethod("NotifySubscribers");
@@ -29,7 +29,7 @@ namespace Mouledoux.Mediation.Systems
             }
         }
 
-        private static bool HasGetImplicitConversion(Type a_baseType, Type a_targetType, out MethodInfo o_method)
+        private static bool HasGetExplicitConversion(Type a_baseType, Type a_targetType, out MethodInfo o_method)
         {
             if (a_baseType == a_targetType)
             {
@@ -38,15 +38,15 @@ namespace Mouledoux.Mediation.Systems
             }
 
             MethodInfo[] methods = a_baseType.GetMethods(BindingFlags.Public | BindingFlags.Static);
-            IEnumerable<MethodInfo> implicitCasts = methods.Where(mi => mi.Name == "op_Implicit" && mi.ReturnType == a_baseType);
-            bool hasMatchingCast = implicitCasts.Any(mi =>
+            IEnumerable<MethodInfo> cast = methods.Where(mi => mi.Name == "op_Explicit" && mi.ReturnType == a_baseType);
+            bool hasCast = cast.Any(mi =>
             {
                 ParameterInfo pi = mi.GetParameters().FirstOrDefault();
                 return pi != null && pi.ParameterType == a_targetType;
             });
 
-            o_method = implicitCasts.FirstOrDefault();
-            return hasMatchingCast;
+            o_method = cast.FirstOrDefault();
+            return hasCast;
         }
 
 

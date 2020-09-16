@@ -256,8 +256,7 @@ namespace Mouledoux.Mediation.Components
 
             public Subscription Subscribe(bool a_acceptStaleMessages = false)
             {
-                Task subTask = Task.Run(() =>
-                   Catalogue<T>.Subscribe(this, a_acceptStaleMessages));
+                Catalogue<T>.Subscribe(this, a_acceptStaleMessages));
 
                 return this;
             }
