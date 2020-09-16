@@ -12,6 +12,14 @@ namespace Mouledoux.Mediation.Systems
         private static Dictionary<string, HashSet<Type>> m_typedMessages =
             new Dictionary<string, HashSet<Type>>();
 
+
+        public static void NotifySubscribersAsync<T>(string a_message, T a_arg, bool a_holdMessage = false)
+        {
+            Task notifyTask = Task.Run(() =>
+               NotifySubscribers(a_message, a_arg, a_holdMessage));
+        }
+
+
         public static void NotifySubscribers<T>(string a_message, T a_arg, bool a_holdMessage = false)
         {
             TryAddTypedMessage(a_message, typeof(T));
@@ -29,13 +37,26 @@ namespace Mouledoux.Mediation.Systems
             }
         }
 
+
+        public static void TryAddTypedMessage(string a_message, Type a_type)
+        {
+            if (!m_typedMessages.ContainsKey(a_message))
+            {
+                m_typedMessages.Add(a_message, new HashSet<Type>() { typeof(object) });
+            }
+            m_typedMessages[a_message].Add(a_type);
+        }
+
+
         private static bool HasGetExplicitConversion(Type a_baseType, Type a_targetType, out MethodInfo o_method)
         {
+            // Early return if the types are the same
             if (a_baseType == a_targetType)
             {
                 o_method = default;
                 return true;
             }
+
 
             MethodInfo[] methods = a_baseType.GetMethods(BindingFlags.Public | BindingFlags.Static);
             IEnumerable<MethodInfo> cast = methods.Where(mi => mi.Name == "op_Explicit" && mi.ReturnType == a_baseType);
@@ -47,30 +68,6 @@ namespace Mouledoux.Mediation.Systems
 
             o_method = cast.FirstOrDefault();
             return hasCast;
-        }
-
-
-
-
-
-
-
-
-
-        public static void NotifySubscribersAsync<T>(string a_message, T a_arg, bool a_holdMessage = false)
-        {
-            Task notifyTask = Task.Run(() =>
-               NotifySubscribers(a_message, a_arg, a_holdMessage));
-        }
-
-
-        public static void TryAddTypedMessage(string a_message, Type a_type)
-        {
-            if (!m_typedMessages.ContainsKey(a_message))
-            {
-                m_typedMessages.Add(a_message, new HashSet<Type>() { typeof(object) });
-            }
-            m_typedMessages[a_message].Add(a_type);
         }
     }
 }
