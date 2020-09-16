@@ -2,7 +2,7 @@
 using System.Threading.Tasks;
 using System.Collections.Generic;
 
-namespace Mouledoux.Mediation.Components
+namespace Mouledoux.Mediation
 {
     public static class Catalogue<T>
     {
@@ -149,8 +149,7 @@ namespace Mouledoux.Mediation.Components
 
                 if (m_subscriptions.Count == 0)
                 {
-                    // TODO:
-                    // Remove type from mediator
+                    // do something...
                 }
 
                 return true;

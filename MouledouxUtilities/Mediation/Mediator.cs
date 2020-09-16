@@ -5,7 +5,7 @@ using System.Threading.Tasks;
 using System.Collections.Generic;
 using Mouledoux.Mediation.Components;
 
-namespace Mouledoux.Mediation.Systems
+namespace Mouledoux.Mediation
 {
     public static class TypedMediator
     {
