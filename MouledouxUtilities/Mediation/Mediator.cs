@@ -43,7 +43,7 @@ namespace Mouledoux.Mediation
 
             foreach (Type type in m_knownTypes)
             {
-                if (HasGetExplicitConversion(type, typeof(T), out MethodInfo o_implicit))
+                if (GetHasExplicitConversion(type, typeof(T), out MethodInfo o_implicit))
                 {
                     dynamic arg = o_implicit == null ? a_arg : o_implicit.Invoke(null, new object[] { a_arg });
                     InvokeGenericMethodAsType(null, "NotifySubscribers", new object[] { a_message, arg, a_holdMessage }, typeof(Catalogue<>), type);
@@ -79,13 +79,7 @@ namespace Mouledoux.Mediation
 
 
 
-
-
-
-
-
-
-        private static bool HasGetExplicitConversion(Type a_baseType, Type a_targetType, out MethodInfo o_method)
+        private static bool GetHasExplicitConversion(Type a_baseType, Type a_targetType, out MethodInfo o_method)
         {
             // Early return if the types are the same
             if (a_baseType == a_targetType)
