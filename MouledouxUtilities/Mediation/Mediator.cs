@@ -9,13 +9,24 @@ namespace Mouledoux.Mediation
     public static class CatalogueTranslator
     {
         private static HashSet<Type> m_knownTypes = new HashSet<Type>() { typeof(object) };
-        private static Catalogue<Type>.Subscription removeTypeSub;
+        private static readonly Catalogue<Type>.Subscription addTypeSub;
+        private static readonly Catalogue<Type>.Subscription removeTypeSub;
 
         static CatalogueTranslator()
         {
-            removeTypeSub = new Catalogue<Type>.Subscription("RemoveTypeFromTranslator",
+            string addTypeMessage = "AddTypeToTranslator";
+            string removeTypeMessage = "RemoveTypeFromTranslator";
+
+            removeTypeSub = new Catalogue<Type>.Subscription(addTypeMessage,
+                (Type t) => m_knownTypes.Add(t), 99).Subscribe();
+
+            removeTypeSub = new Catalogue<Type>.Subscription(removeTypeMessage,
                 (Type t) => m_knownTypes.Remove(t), 99).Subscribe();
         }
+
+
+
+
 
         public static void NotifySubscribersAsync<T>(string a_message, T a_arg, bool a_holdMessage = false)
         {
@@ -24,28 +35,54 @@ namespace Mouledoux.Mediation
         }
 
 
+
+
         public static void NotifySubscribers<T>(string a_message, T a_arg, bool a_holdMessage = false)
         {
-            TryAddTypedSubscription<T>(a_message);
+            TryAddTypedSubscription<T>();
 
             foreach (Type type in m_knownTypes)
             {
                 if (HasGetExplicitConversion(type, typeof(T), out MethodInfo o_implicit))
                 {
-                    Type thisType = typeof(Catalogue<>).MakeGenericType(new Type[] { type });
-                    MethodInfo typedMethod = thisType.GetMethod("NotifySubscribers");
-
                     dynamic arg = o_implicit == null ? a_arg : o_implicit.Invoke(null, new object[] { a_arg });
-                    typedMethod.Invoke(null, new object[] { a_message, arg, a_holdMessage });
+                    InvokeGenericMethodAsType(null, "NotifySubscribers", new object[] { a_message, arg, a_holdMessage }, typeof(Catalogue<>), type);
                 }
             }
         }
 
 
-        public static void TryAddTypedSubscription<T>(string a_message)
+
+
+        public static void TryAddTypedSubscription<T>()
         {
-            m_knownTypes.Add(typeof(T));
+            Type type = typeof(T);
+            if (!m_knownTypes.Contains(type))
+            {
+                m_knownTypes.Add(typeof(T));
+                Catalogue<T>.OnCatalogueEmpty += (Type t) => m_knownTypes.Remove(type);
+            }
         }
+
+
+
+
+        private static void InvokeGenericMethodAsType(object a_target, string a_methodName, object[] a_args, Type a_genericType, Type a_invokeType)
+        {
+            Type thisType = a_genericType.MakeGenericType(new Type[] { a_invokeType });
+            MethodInfo typedMethod = thisType.GetMethod(a_methodName);
+            
+            typedMethod.Invoke(a_target, a_args);
+        }
+
+
+
+
+
+
+
+
+
 
 
         private static bool HasGetExplicitConversion(Type a_baseType, Type a_targetType, out MethodInfo o_method)

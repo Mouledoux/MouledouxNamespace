@@ -12,12 +12,16 @@ namespace Mouledoux.Mediation
         /// </summary>
         private static Dictionary<string, List<Subscription>> m_subscriptions =
             new Dictionary<string, List<Subscription>>();
-        
+
         /// <summary>
         /// Messages that had no subscriptions at broadcast, but were marked for hold
         /// </summary>
         private static List<string> m_staleMessages = new List<string>();
 
+
+        public static Action OnSubAdded = default;
+        public static Action OnSubRemoved = default;
+        public static Action<Type> OnCatalogueEmpty = default;
 
 
         /// <summary>
@@ -149,7 +153,7 @@ namespace Mouledoux.Mediation
 
                 if (m_subscriptions.Count == 0)
                 {
-                    Catalogue<Type>.NotifySubscribers("RemoveTypeFromTranslator", typeof(T));
+                    OnCatalogueEmpty?.Invoke(typeof(T));
                 }
 
                 return true;
@@ -174,6 +178,7 @@ namespace Mouledoux.Mediation
             {
                 tSub = new List<Subscription>();
                 m_subscriptions.Add(message, tSub);
+                OnSubAdded?.Invoke();
 
                 if (a_acceptStaleMesages && m_staleMessages.Contains(message))
                 {
@@ -194,6 +199,7 @@ namespace Mouledoux.Mediation
             if (m_subscriptions.TryGetValue(message, out List<Subscription> tSub))
             {
                 tSub.Remove(a_sub);
+                OnSubRemoved?.Invoke();
 
                 if (tSub.Count == 0)
                 {
@@ -205,7 +211,6 @@ namespace Mouledoux.Mediation
                 }
             }
         }
-
 
 
 
