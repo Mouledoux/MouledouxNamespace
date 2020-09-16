@@ -3,13 +3,12 @@ using System.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
 using System.Collections.Generic;
-using Mouledoux.Mediation.Components;
 
 namespace Mouledoux.Mediation
 {
-    public static class TypedMediator
+    public static class CatalogueTranslator
     {
-        private static Dictionary<string, HashSet<Type>> m_typedMessages =
+        private static Dictionary<string, HashSet<Type>> m_knownTranslations =
             new Dictionary<string, HashSet<Type>>();
 
 
@@ -24,7 +23,7 @@ namespace Mouledoux.Mediation
         {
             TryAddTypedMessage(a_message, typeof(T));
 
-            foreach (Type type in m_typedMessages[a_message])
+            foreach (Type type in m_knownTranslations[a_message])
             {
                 if (HasGetExplicitConversion(type, typeof(T), out MethodInfo o_implicit))
                 {
@@ -40,11 +39,11 @@ namespace Mouledoux.Mediation
 
         public static void TryAddTypedMessage(string a_message, Type a_type)
         {
-            if (!m_typedMessages.ContainsKey(a_message))
+            if (!m_knownTranslations.ContainsKey(a_message))
             {
-                m_typedMessages.Add(a_message, new HashSet<Type>() { typeof(object) });
+                m_knownTranslations.Add(a_message, new HashSet<Type>() { typeof(object) });
             }
-            m_typedMessages[a_message].Add(a_type);
+            m_knownTranslations[a_message].Add(a_type);
         }
 
 
