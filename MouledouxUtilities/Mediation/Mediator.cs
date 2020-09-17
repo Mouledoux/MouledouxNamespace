@@ -24,7 +24,7 @@ namespace Mouledoux.Mediation
             removeTypeSub = new Catalogue<Type>.Subscription(removeTypeMessage,
                 (Type t) => m_knownTypes.Remove(t), 99).Subscribe();
         }
-        
+
 
         public static void NotifySubscribersAsync<T>(string a_message, T a_arg, bool a_holdMessage = false)
         {
@@ -38,14 +38,14 @@ namespace Mouledoux.Mediation
 
             foreach (Type type in m_knownTypes)
             {
-                if (Rosetta.TryGetExplicitCastFromTo(typeof(T), type, out MethodInfo o_implicit))
+                if (type == typeof(T) | Rosetta.TryGetExplicitCastFromTo(typeof(T), type, out MethodInfo o_implicit))
                 {
                     dynamic arg = o_implicit == null ? a_arg : o_implicit.Invoke(null, new object[] { a_arg });
                     Rosetta.InvokeGenericMethodAsType(null, "NotifySubscribers", new object[] { a_message, arg, a_holdMessage }, typeof(Catalogue<>), type);
                 }
             }
         }
-        
+
         public static void TryAddTypedSubscription<T>()
         {
             Type type = typeof(T);
