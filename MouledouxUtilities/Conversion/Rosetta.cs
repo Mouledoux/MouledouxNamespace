@@ -21,7 +21,6 @@ namespace Mouledoux.Conversion
         public static bool TryPerformExplicitCastFromTo<T, U>(ref T a_obj, out U o_obj)
         {
             bool hasCast = TryGetExplicitCastFromTo(typeof(T), typeof(U), out MethodInfo explicitCast);
-            Type returnType = explicitCast.ReturnType;
             o_obj = hasCast ? (U)explicitCast.Invoke(null, new object[] { a_obj }) : default;
             return hasCast;
         }
@@ -49,29 +48,27 @@ namespace Mouledoux.Conversion
             return TryGetAnyStaticCastFromTo(a_originType, a_targetType, out o_method, a_methodName);
         }
 
-
-        // Caution, needs testing
         public static bool TryGetAnyNonStaticCastFromTo(Type a_originType, Type a_targetType, out MethodInfo o_method, string a_methodName = default)
         {
-            return TryGetAnyCastFromTo(a_originType, a_targetType, out o_method, BindingFlags.Public & ~BindingFlags.Static);
+            return TryGetAnyCastFromTo(a_originType, a_targetType, out o_method, BindingFlags.Public | BindingFlags.Instance, a_methodName);
         }
 
         public static bool TryGetAnyStaticCastFromTo(Type a_originType, Type a_targetType, out MethodInfo o_method, string a_methodName = default)
         {
-            return TryGetAnyCastFromTo(a_originType, a_targetType, out o_method, BindingFlags.Public | BindingFlags.Static);
+            return TryGetAnyCastFromTo(a_originType, a_targetType, out o_method, BindingFlags.Public | BindingFlags.Static, a_methodName);
         }
 
 
         private static bool TryGetAnyCastFromTo(Type a_originType, Type a_targetType, out MethodInfo o_method, BindingFlags a_bindingFlags, string a_methodName = default)
         {
             MethodInfo[] methods = a_targetType.GetMethods(a_bindingFlags);
-            IEnumerable<MethodInfo> cast = methods.Where(mi =>
+            IEnumerable<MethodInfo> cast = methods?.Where(mi =>
                 mi.ReturnType == a_targetType &&
                 (a_methodName == default || mi.Name == a_methodName) &&
                 mi.GetParameters().FirstOrDefault().ParameterType == a_originType);
 
-            o_method = cast.FirstOrDefault();
-            return cast.Count() > 0;
+            o_method = cast?.FirstOrDefault();
+            return cast?.Count() > 0;
         }
     }
 }
