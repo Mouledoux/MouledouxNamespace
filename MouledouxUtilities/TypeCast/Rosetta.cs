@@ -4,7 +4,7 @@ using System.Reflection;
 using System.Threading.Tasks;
 using System.Collections.Generic;
 
-namespace Mouledoux.Conversion
+namespace Mouledoux.Casting
 {
     public static class Rosetta
     {
@@ -15,7 +15,6 @@ namespace Mouledoux.Conversion
 
             typedMethod.Invoke(a_target, a_args);
         }
-
 
 
 
@@ -37,6 +36,7 @@ namespace Mouledoux.Conversion
             o_obj = hasCast ? (U)implicitCast.Invoke(null, new object[] { a_obj }) : default;
             return hasCast;
         }
+
 
 
         public static bool TryGetExplicitCastFromTo(Type a_originType, Type a_targetType, out MethodInfo o_method)
@@ -63,6 +63,7 @@ namespace Mouledoux.Conversion
         {
             return TryGetAnyCastFromTo(a_originType, a_targetType, out o_method, BindingFlags.Public | BindingFlags.Static, a_methodName);
         }
+
 
 
         private static bool TryGetAnyCastFromTo(Type a_originType, Type a_targetType, out MethodInfo o_method, BindingFlags a_bindingFlags, string a_methodName = default)
