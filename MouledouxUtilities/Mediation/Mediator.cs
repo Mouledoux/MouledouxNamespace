@@ -3,6 +3,7 @@ using System.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
 using System.Collections.Generic;
+using Mouledoux.Conversion;
 
 namespace Mouledoux.Mediation
 {
@@ -43,17 +44,14 @@ namespace Mouledoux.Mediation
 
             foreach (Type type in m_knownTypes)
             {
-                if (TryGetExplicitConversion(type, typeof(T), out MethodInfo o_implicit))
+                if (Rosetta.TryGetExplicitCastFromTo(typeof(T), type, out MethodInfo o_implicit))
                 {
                     dynamic arg = o_implicit == null ? a_arg : o_implicit.Invoke(null, new object[] { a_arg });
-                    InvokeGenericMethodAsType(null, "NotifySubscribers", new object[] { a_message, arg, a_holdMessage }, typeof(Catalogue<>), type);
+                    Rosetta.InvokeGenericMethodAsType(null, "NotifySubscribers", new object[] { a_message, arg, a_holdMessage }, typeof(Catalogue<>), type);
                 }
             }
         }
-
-
-
-
+        
         public static void TryAddTypedSubscription<T>()
         {
             Type type = typeof(T);
@@ -62,17 +60,6 @@ namespace Mouledoux.Mediation
                 m_knownTypes.Add(typeof(T));
                 Catalogue<T>.OnCatalogueEmpty += (Type t) => m_knownTypes.Remove(type);
             }
-        }
-
-
-
-
-        private static void InvokeGenericMethodAsType(object a_target, string a_methodName, object[] a_args, Type a_genericType, Type a_invokeType)
-        {
-            Type thisType = a_genericType.MakeGenericType(new Type[] { a_invokeType });
-            MethodInfo typedMethod = thisType.GetMethod(a_methodName);
-            
-            typedMethod.Invoke(a_target, a_args);
         }
     }
 }
