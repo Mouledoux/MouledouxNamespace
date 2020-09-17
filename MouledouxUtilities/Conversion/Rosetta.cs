@@ -10,57 +10,54 @@ namespace Mouledoux.Conversion
     {
         public static bool TryPerformExplicitCastFromTo<T, U>(ref T a_obj, out U o_obj)
         {
-            bool hasCast = TryGetExplicitCastFromTo<T, U>(out MethodInfo explicitCast);
+            bool hasCast = TryGetExplicitCastFromTo(typeof(T), typeof(U), out MethodInfo explicitCast);
             o_obj = hasCast ? explicitCast.Invoke(null, new object[] { a_obj }) as dynamic : default;
             return hasCast;
         }
 
         public static bool TryPerformImplicitCastFromTo<T, U>(ref T a_obj, out U o_obj)
         {
-            bool hasCast = TryGetImplicitCastFromTo<T, U>(out MethodInfo implicitCast);
+            bool hasCast = TryGetImplicitCastFromTo(typeof(T), typeof(U), out MethodInfo implicitCast);
             o_obj = hasCast ? implicitCast.Invoke(null, new object[] { a_obj }) as dynamic : default;
             return hasCast;
         }
 
 
-        public static bool TryGetExplicitCastFromTo<T, U>(out MethodInfo o_method)
+        public static bool TryGetExplicitCastFromTo(Type a_originType, Type a_targetType, out MethodInfo o_method)
         {
-            return TryGetStaticMethodCastFromTo<T, U>("op_Explicit", out o_method);
+            return TryGetStaticMethodCastFromTo(a_originType, a_targetType, "op_Explicit", out o_method);
         }
 
-        public static bool TryGetImplicitCastFromTo<T, U>(out MethodInfo o_method)
+        public static bool TryGetImplicitCastFromTo(Type a_originType, Type a_targetType, out MethodInfo o_method)
         {
-            return TryGetStaticMethodCastFromTo<T, U>("op_Implicit", out o_method);
+            return TryGetStaticMethodCastFromTo(a_originType, a_targetType, "op_Implicit", out o_method);
         }
 
-        public static bool TryGetStaticMethodCastFromTo<T, U>(string a_methodName, out MethodInfo o_method)
+        public static bool TryGetStaticMethodCastFromTo(Type a_originType, Type a_targetType, string a_methodName, out MethodInfo o_method)
         {
-            return TryGetAnyStaticCastFromTo<T, U>(out o_method, a_methodName);
+            return TryGetAnyStaticCastFromTo(a_originType, a_targetType, out o_method, a_methodName);
         }
 
 
         // Caution, needs testing
-        public static bool TryGetAnyNonStaticCastFromTo<T, U>(out MethodInfo o_method, string a_methodName = default)
+        public static bool TryGetAnyNonStaticCastFromTo(Type a_originType, Type a_targetType, out MethodInfo o_method, string a_methodName = default)
         {
-            return TryGetAnyCastFromTo<T, U>(out o_method, BindingFlags.Public & ~BindingFlags.Static);
+            return TryGetAnyCastFromTo(a_originType, a_targetType, out o_method, BindingFlags.Public & ~BindingFlags.Static);
         }
 
-        public static bool TryGetAnyStaticCastFromTo<T, U>(out MethodInfo o_method, string a_methodName = default)
+        public static bool TryGetAnyStaticCastFromTo(Type a_originType, Type a_targetType, out MethodInfo o_method, string a_methodName = default)
         {
-            return TryGetAnyCastFromTo<T, U>(out o_method, BindingFlags.Public | BindingFlags.Static);
+            return TryGetAnyCastFromTo(a_originType, a_targetType, out o_method, BindingFlags.Public | BindingFlags.Static);
         }
 
 
-        private static bool TryGetAnyCastFromTo<T, U>(out MethodInfo o_method, BindingFlags a_bindingFlags, string a_methodName = default)
+        private static bool TryGetAnyCastFromTo(Type a_originType, Type a_targetType, out MethodInfo o_method, BindingFlags a_bindingFlags, string a_methodName = default)
         {
-            Type origin = typeof(T);
-            Type target = typeof(U);
-
-            MethodInfo[] methods = target.GetMethods(a_bindingFlags);
+            MethodInfo[] methods =a_targetType.GetMethods(a_bindingFlags);
             IEnumerable<MethodInfo> cast = methods.Where(mi =>
-                mi.ReturnType == target &&
+                mi.ReturnType == a_targetType &&
                 (a_methodName == default || mi.Name == a_methodName) &&
-                mi.GetParameters().FirstOrDefault().ParameterType == origin);
+                mi.GetParameters().FirstOrDefault().ParameterType == a_originType);
 
             o_method = cast.FirstOrDefault();
             return cast.Count() > 0;
