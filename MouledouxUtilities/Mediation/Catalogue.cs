@@ -16,7 +16,7 @@ namespace Mouledoux.Mediation
         /// <summary>
         /// Messages that had no subscriptions at broadcast, but were marked for hold
         /// </summary>
-        private static List<string> m_staleMessages = new List<string>();
+        private static HashSet<string> m_staleMessages = new HashSet<string>();
 
 
         public static Action OnSubAdded = default;
@@ -48,7 +48,7 @@ namespace Mouledoux.Mediation
             bool messageBroadcasted = TryInvokeSubscription(a_message, a_arg);
 
             // If nothing is listening to the message, but it's been marked to hold
-            if (!messageBroadcasted && a_holdMessage && !m_staleMessages.Contains(a_message))
+            if (!messageBroadcasted && a_holdMessage)
             {
                 // add it to the hold list
                 m_staleMessages.Add(a_message);
