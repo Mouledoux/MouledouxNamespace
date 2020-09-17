@@ -72,12 +72,5 @@ namespace Mouledoux.Conversion
             o_method = cast.FirstOrDefault();
             return cast.Count() > 0;
         }
-
-
-
-
-
-
-
     }
 }
