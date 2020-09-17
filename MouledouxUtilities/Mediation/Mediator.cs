@@ -7,13 +7,13 @@ using Mouledoux.Casting;
 
 namespace Mouledoux.Mediation
 {
-    public static class CatalogueTranslator
+    public static class CatalogueMediator
     {
         private static HashSet<Type> m_knownTypes = new HashSet<Type>() { typeof(object), typeof(Type) };
         private static readonly Catalogue<Type>.Subscription addTypeSub;
         private static readonly Catalogue<Type>.Subscription removeTypeSub;
 
-        static CatalogueTranslator()
+        static CatalogueMediator()
         {
             string addTypeMessage = "AddTypeToTranslator";
             string removeTypeMessage = "RemoveTypeFromTranslator";
