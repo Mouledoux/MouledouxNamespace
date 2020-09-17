@@ -64,7 +64,7 @@ namespace Mouledoux.Conversion
 
         private static bool TryGetAnyCastFromTo(Type a_originType, Type a_targetType, out MethodInfo o_method, BindingFlags a_bindingFlags, string a_methodName = default)
         {
-            MethodInfo[] methods =a_targetType.GetMethods(a_bindingFlags);
+            MethodInfo[] methods = a_targetType.GetMethods(a_bindingFlags);
             IEnumerable<MethodInfo> cast = methods.Where(mi =>
                 mi.ReturnType == a_targetType &&
                 (a_methodName == default || mi.Name == a_methodName) &&

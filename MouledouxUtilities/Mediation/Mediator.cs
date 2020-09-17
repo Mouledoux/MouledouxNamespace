@@ -29,16 +29,30 @@ namespace Mouledoux.Mediation
         public static void NotifySubscribersAsync<T>(string a_message, T a_arg, bool a_holdMessage = false)
         {
             Task notifyTask = Task.Run(() =>
-               NotifySubscribers(a_message, a_arg, a_holdMessage));
+               NotifyAllSubscribers(a_message, a_arg, a_holdMessage));
         }
 
-        public static void NotifySubscribers<T>(string a_message, T a_arg, bool a_holdMessage = false)
+        public static void NotifyAllSubscribers<T>(string a_message, T a_arg, bool a_holdMessage = false)
         {
             TryAddTypedSubscription<T>();
 
             foreach (Type type in m_knownTypes)
             {
                 if (type == typeof(T) | Rosetta.TryGetExplicitCastFromTo(typeof(T), type, out MethodInfo o_implicit))
+                {
+                    dynamic arg = o_implicit == null ? a_arg : o_implicit.Invoke(null, new object[] { a_arg });
+                    Rosetta.InvokeGenericMethodAsType(null, "NotifySubscribers", new object[] { a_message, arg, a_holdMessage }, typeof(Catalogue<>), type);
+                }
+            }
+        }
+
+        public static void NotifyAllSybscribersBut<T>(string a_message, T a_arg, bool a_holdMessage = false)
+        {
+            TryAddTypedSubscription<T>();
+
+            foreach (Type type in m_knownTypes)
+            {
+                if (Rosetta.TryGetExplicitCastFromTo(typeof(T), type, out MethodInfo o_implicit))
                 {
                     dynamic arg = o_implicit == null ? a_arg : o_implicit.Invoke(null, new object[] { a_arg });
                     Rosetta.InvokeGenericMethodAsType(null, "NotifySubscribers", new object[] { a_message, arg, a_holdMessage }, typeof(Catalogue<>), type);
