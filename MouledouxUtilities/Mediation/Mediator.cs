@@ -43,7 +43,7 @@ namespace Mouledoux.Mediation
 
             foreach (Type type in m_knownTypes)
             {
-                if (GetHasExplicitConversion(type, typeof(T), out MethodInfo o_implicit))
+                if (TryGetExplicitConversion(type, typeof(T), out MethodInfo o_implicit))
                 {
                     dynamic arg = o_implicit == null ? a_arg : o_implicit.Invoke(null, new object[] { a_arg });
                     InvokeGenericMethodAsType(null, "NotifySubscribers", new object[] { a_message, arg, a_holdMessage }, typeof(Catalogue<>), type);
@@ -79,7 +79,7 @@ namespace Mouledoux.Mediation
 
 
 
-        private static bool GetHasExplicitConversion(Type a_baseType, Type a_targetType, out MethodInfo o_method)
+        private static bool TryGetExplicitConversion(Type a_baseType, Type a_targetType, out MethodInfo o_method)
         {
             // Early return if the types are the same
             if (a_baseType == a_targetType)
@@ -98,6 +98,23 @@ namespace Mouledoux.Mediation
             });
 
             o_method = cast.FirstOrDefault();
+            return hasCast;
+        }
+
+        private static bool TryPerformExplicitConversionFromTo<T, U>(T a_obj, out U o_obj)
+        {
+            Type origin = typeof(T);
+            Type target = typeof(U);
+
+            MethodInfo[] methods = target.GetMethods(BindingFlags.Public | BindingFlags.Static);
+            IEnumerable<MethodInfo> cast = methods.Where(mi => mi.Name == "op_Explicit" && mi.ReturnType == target);
+            bool hasCast = cast.Any(mi =>
+            {
+                ParameterInfo pi = mi.GetParameters().FirstOrDefault();
+                return pi != null && pi.ParameterType == origin;
+            });
+
+            o_obj = hasCast ? cast.FirstOrDefault().Invoke(null, new object[] { a_obj }) as dynamic : default;
             return hasCast;
         }
     }
