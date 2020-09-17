@@ -147,19 +147,19 @@ namespace Mouledoux.Mediation
         
         private static bool RemoveSubscriptionMessage(string a_message)
         {
+            bool success = false;
             if (m_subscriptions.ContainsKey(a_message))
             {
                 m_subscriptions.Remove(a_message);
+                success = true;
 
                 if (m_subscriptions.Count == 0)
                 {
                     OnCatalogueEmpty?.Invoke(typeof(T));
                 }
-
-                return true;
             }
 
-            return false;
+            return success;
         }
 
 
