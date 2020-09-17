@@ -8,7 +8,7 @@ namespace Mouledoux.Mediation
 {
     public static class CatalogueTranslator
     {
-        private static HashSet<Type> m_knownTypes = new HashSet<Type>() { typeof(object) };
+        private static HashSet<Type> m_knownTypes = new HashSet<Type>() { typeof(object), typeof(Type) };
         private static readonly Catalogue<Type>.Subscription addTypeSub;
         private static readonly Catalogue<Type>.Subscription removeTypeSub;
 
