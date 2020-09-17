@@ -17,7 +17,7 @@ namespace Mouledoux.Mediation
             string addTypeMessage = "AddTypeToTranslator";
             string removeTypeMessage = "RemoveTypeFromTranslator";
 
-            removeTypeSub = new Catalogue<Type>.Subscription(addTypeMessage,
+            addTypeSub = new Catalogue<Type>.Subscription(addTypeMessage,
                 (Type t) => m_knownTypes.Add(t), 99).Subscribe();
 
             removeTypeSub = new Catalogue<Type>.Subscription(removeTypeMessage,
