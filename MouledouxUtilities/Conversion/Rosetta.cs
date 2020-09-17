@@ -43,15 +43,26 @@ namespace Mouledoux.Conversion
             return TryGetAnyStaticCastFromTo<T, U>(out o_method, a_methodName);
         }
 
+        public static bool TryGetAnyStaticCastFromTo<T, U>(out MethodInfo o_method, string a_methodName = default)
+        {
+            return TryGetAnyCastFromTo<T, U>(out o_method, BindingFlags.Public | BindingFlags.Static);
+        }
+
+
+        // Caution, needs testing
+        public static bool TryGetAnyNonStaticCastFromTo<T, U>(out MethodInfo o_method, string a_methodName = default)
+        {
+            return TryGetAnyCastFromTo<T, U>(out o_method, BindingFlags.Public & ~BindingFlags.Static);
+        }
 
 
 
-        private static bool TryGetAnyStaticCastFromTo<T, U>(out MethodInfo o_method, string a_methodName = default)
+        private static bool TryGetAnyCastFromTo<T, U>(out MethodInfo o_method, BindingFlags a_bindingFlags, string a_methodName = default)
         {
             Type origin = typeof(T);
             Type target = typeof(U);
 
-            MethodInfo[] methods = target.GetMethods(BindingFlags.Public | BindingFlags.Static);
+            MethodInfo[] methods = target.GetMethods(a_bindingFlags);
             IEnumerable<MethodInfo> cast = methods.Where(mi =>
                 mi.ReturnType == target &&
                 (a_methodName == default || mi.Name == a_methodName) &&
@@ -60,9 +71,6 @@ namespace Mouledoux.Conversion
             o_method = cast.FirstOrDefault();
             return cast.Count() > 0;
         }
-
-
-
 
     }
 }
