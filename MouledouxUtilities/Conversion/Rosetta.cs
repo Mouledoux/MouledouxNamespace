@@ -21,14 +21,15 @@ namespace Mouledoux.Conversion
         public static bool TryPerformExplicitCastFromTo<T, U>(ref T a_obj, out U o_obj)
         {
             bool hasCast = TryGetExplicitCastFromTo(typeof(T), typeof(U), out MethodInfo explicitCast);
-            o_obj = hasCast ? explicitCast.Invoke(null, new object[] { a_obj }) as dynamic : default;
+            Type returnType = explicitCast.ReturnType;
+            o_obj = hasCast ? (U)explicitCast.Invoke(null, new object[] { a_obj }) : default;
             return hasCast;
         }
 
         public static bool TryPerformImplicitCastFromTo<T, U>(ref T a_obj, out U o_obj)
         {
             bool hasCast = TryGetImplicitCastFromTo(typeof(T), typeof(U), out MethodInfo implicitCast);
-            o_obj = hasCast ? implicitCast.Invoke(null, new object[] { a_obj }) as dynamic : default;
+            o_obj = hasCast ? (U)implicitCast.Invoke(null, new object[] { a_obj }) : default;
             return hasCast;
         }
 
