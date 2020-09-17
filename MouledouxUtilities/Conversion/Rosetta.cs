@@ -23,29 +23,19 @@ namespace Mouledoux.Conversion
         }
 
 
-        public static bool TryGetAnyCastFromTo<T, U>(out MethodInfo o_method)
-        {
-            return TryGetAnyStaticCastFromTo<T, U>(out o_method);
-        }
-
         public static bool TryGetExplicitCastFromTo<T, U>(out MethodInfo o_method)
         {
-            return TryGetMethodCastFromTo<T, U>("op_Explicit", out o_method);
+            return TryGetStaticMethodCastFromTo<T, U>("op_Explicit", out o_method);
         }
 
         public static bool TryGetImplicitCastFromTo<T, U>(out MethodInfo o_method)
         {
-            return TryGetMethodCastFromTo<T, U>("op_Implicit", out o_method);
+            return TryGetStaticMethodCastFromTo<T, U>("op_Implicit", out o_method);
         }
 
-        public static bool TryGetMethodCastFromTo<T, U>(string a_methodName, out MethodInfo o_method)
+        public static bool TryGetStaticMethodCastFromTo<T, U>(string a_methodName, out MethodInfo o_method)
         {
             return TryGetAnyStaticCastFromTo<T, U>(out o_method, a_methodName);
-        }
-
-        public static bool TryGetAnyStaticCastFromTo<T, U>(out MethodInfo o_method, string a_methodName = default)
-        {
-            return TryGetAnyCastFromTo<T, U>(out o_method, BindingFlags.Public | BindingFlags.Static);
         }
 
 
@@ -55,6 +45,10 @@ namespace Mouledoux.Conversion
             return TryGetAnyCastFromTo<T, U>(out o_method, BindingFlags.Public & ~BindingFlags.Static);
         }
 
+        public static bool TryGetAnyStaticCastFromTo<T, U>(out MethodInfo o_method, string a_methodName = default)
+        {
+            return TryGetAnyCastFromTo<T, U>(out o_method, BindingFlags.Public | BindingFlags.Static);
+        }
 
 
         private static bool TryGetAnyCastFromTo<T, U>(out MethodInfo o_method, BindingFlags a_bindingFlags, string a_methodName = default)
