@@ -18,6 +18,12 @@ namespace Mouledoux.Conversion
 
 
 
+
+        public static bool TryGetAnyCastFromTo(Type a_originType, Type a_targetType, out MethodInfo o_method)
+        {
+            return TryGetAnyCastFromTo(a_originType, a_targetType, out o_method, BindingFlags.Public | BindingFlags.Instance | BindingFlags.Static);
+        }
+
         public static bool TryPerformExplicitCastFromTo<T, U>(ref T a_obj, out U o_obj)
         {
             bool hasCast = TryGetExplicitCastFromTo(typeof(T), typeof(U), out MethodInfo explicitCast);
