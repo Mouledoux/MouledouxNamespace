@@ -15,6 +15,14 @@ namespace Mouledoux.Casting
             typedMethod.Invoke(a_target, a_args);
         }
 
+        public static T InvokeGenericMethodAsType<T>(object a_target, string a_methodName, object[] a_args, Type a_genericType, Type a_invokeType)
+        {
+            Type thisType = a_genericType.MakeGenericType(new Type[] { a_invokeType });
+            MethodInfo typedMethod = thisType.GetMethod(a_methodName);
+
+            return (T)typedMethod.Invoke(a_target, a_args);
+        }
+
 
 
         public static bool TryGetAnyCastFromTo(Type a_originType, Type a_targetType, out MethodInfo o_method)
