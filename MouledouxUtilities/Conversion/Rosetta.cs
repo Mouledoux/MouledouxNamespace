@@ -8,6 +8,16 @@ namespace Mouledoux.Conversion
 {
     public static class Rosetta
     {
+        public static void InvokeGenericMethodAsType(object a_target, string a_methodName, object[] a_args, Type a_genericType, Type a_invokeType)
+        {
+            Type thisType = a_genericType.MakeGenericType(new Type[] { a_invokeType });
+            MethodInfo typedMethod = thisType.GetMethod(a_methodName);
+
+            typedMethod.Invoke(a_target, a_args);
+        }
+
+
+
         public static bool TryPerformExplicitCastFromTo<T, U>(ref T a_obj, out U o_obj)
         {
             bool hasCast = TryGetExplicitCastFromTo(typeof(T), typeof(U), out MethodInfo explicitCast);
@@ -62,6 +72,12 @@ namespace Mouledoux.Conversion
             o_method = cast.FirstOrDefault();
             return cast.Count() > 0;
         }
+
+
+
+
+
+
 
     }
 }
