@@ -24,19 +24,13 @@ namespace Mouledoux.Mediation
             removeTypeSub = new Catalogue<Type>.Subscription(removeTypeMessage,
                 (Type t) => m_knownTypes.Remove(t), 99).Subscribe();
         }
-
-
-
-
+        
 
         public static void NotifySubscribersAsync<T>(string a_message, T a_arg, bool a_holdMessage = false)
         {
             Task notifyTask = Task.Run(() =>
                NotifySubscribers(a_message, a_arg, a_holdMessage));
         }
-
-
-
 
         public static void NotifySubscribers<T>(string a_message, T a_arg, bool a_holdMessage = false)
         {
