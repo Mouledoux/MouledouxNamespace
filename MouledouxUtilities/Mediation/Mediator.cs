@@ -32,27 +32,20 @@ namespace Mouledoux.Mediation
                NotifyAllSubscribers(a_message, a_arg, a_holdMessage));
         }
 
-        public static void NotifyAllSubscribers<T>(string a_message, T a_arg, bool a_holdMessage = false)
+        public static void NotifyAllSubscribers<T>(string a_message, T a_arg, bool a_holdMessage = false, bool a_excludeTypeT = false)
         {
-            TryAddTypedSubscription<T>();
+            Type typeT = typeof(T);
 
+            TryAddTypedSubscription<T>();
+            
             foreach (Type type in m_knownTypes)
             {
-                if (type == typeof(T) | Rosetta.TryGetExplicitCastFromTo(typeof(T), type, out MethodInfo o_implicit))
+                if (a_excludeTypeT && type == typeT)
                 {
-                    dynamic arg = o_implicit == null ? a_arg : o_implicit.Invoke(null, new object[] { a_arg });
-                    Rosetta.InvokeGenericMethodAsType(null, "NotifySubscribers", new object[] { a_message, arg, a_holdMessage }, typeof(Catalogue<>), type);
+                    continue;
                 }
-            }
-        }
 
-        public static void NotifyAllSybscribersBut<T>(string a_message, T a_arg, bool a_holdMessage = false)
-        {
-            TryAddTypedSubscription<T>();
-
-            foreach (Type type in m_knownTypes)
-            {
-                if (Rosetta.TryGetExplicitCastFromTo(typeof(T), type, out MethodInfo o_implicit))
+                else if (Rosetta.TryGetExplicitCastFromTo(typeT, type, out MethodInfo o_implicit))
                 {
                     dynamic arg = o_implicit == null ? a_arg : o_implicit.Invoke(null, new object[] { a_arg });
                     Rosetta.InvokeGenericMethodAsType(null, "NotifySubscribers", new object[] { a_message, arg, a_holdMessage }, typeof(Catalogue<>), type);
@@ -65,7 +58,7 @@ namespace Mouledoux.Mediation
             Type type = typeof(T);
             if (!m_knownTypes.Contains(type))
             {
-                m_knownTypes.Add(typeof(T));
+                m_knownTypes.Add(type);
                 Catalogue<T>.OnCatalogueEmpty += (Type t) => m_knownTypes.Remove(type);
             }
         }
