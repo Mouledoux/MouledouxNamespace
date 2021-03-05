@@ -59,7 +59,7 @@ namespace Mouledoux.Mediation
             if (!m_knownTypes.Contains(type))
             {
                 m_knownTypes.Add(type);
-                Catalogue<T>.OnCatalogueEmpty += (Type t) => m_knownTypes.Remove(type);
+                Catalogue<T>.OnCatalogueEmpty += () => m_knownTypes.Remove(type);
             }
         }
     }

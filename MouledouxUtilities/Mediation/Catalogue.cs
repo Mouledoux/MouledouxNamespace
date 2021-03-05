@@ -21,7 +21,7 @@ namespace Mouledoux.Mediation
 
         public static Action OnSubAdded = default;
         public static Action OnSubRemoved = default;
-        public static Action<Type> OnCatalogueEmpty = default;
+        public static Action OnCatalogueEmpty = default;
 
 
         /// <summary>
@@ -30,10 +30,9 @@ namespace Mouledoux.Mediation
         /// <param name="a_message">message to broadcast</param>
         /// <param name="a_args">arguments to pass to subscription callbacks</param>
         /// <param name="a_holdMessage">if there are no active subscriptions, rebroadcast when one subscribes</param>
-        public static void NotifySubscribersAsync(string a_message, T a_arg = default, bool a_holdMessage = false)
+        public static Task NotifySubscribersAsync(string a_message, T a_arg = default, bool a_holdMessage = false)
         {
-            Task notifyTask = Task.Run(() =>
-               NotifySubscribers(a_message, a_arg, a_holdMessage));
+            return Task.Run(() => NotifySubscribers(a_message, a_arg, a_holdMessage));
         }
 
 
@@ -47,10 +46,8 @@ namespace Mouledoux.Mediation
         {
             bool messageBroadcasted = TryInvokeSubscription(a_message, a_arg);
 
-            // If nothing is listening to the message, but it's been marked to hold
             if (!messageBroadcasted && a_holdMessage)
             {
-                // add it to the hold list
                 m_staleMessages.Add(a_message);
             }
         }
@@ -102,43 +99,39 @@ namespace Mouledoux.Mediation
             {
                 RemoveCorruptSubscriptions(a_message);
 
-                return m_subscriptions[a_message].Count > 0 ||
-                        !RemoveSubscriptionMessage(a_message);
+                return m_subscriptions[a_message].Count > 0 || !RemoveSubscriptionMessage(a_message);
             }
             return false;
         }
 
 
-        // A 'corrupted' sub, is a sub with a null target object
+        /// <summary>
+        /// A 'corrupted' sub, is a sub with a null target object
+        /// </summary>
+        /// <param name="a_message"></param>
         private static void RemoveCorruptSubscriptions(string a_message)
         {
-            if (m_subscriptions.TryGetValue(a_message, out List<Subscription> tSub))
+            if (m_subscriptions.TryGetValue(a_message, out List<Subscription> subs))
             {
-                for (int i = 0; i < tSub.Count; i++)
+                for (int i = 0; i < subs.Count; i++)
                 {
                     try
                     {
-                        foreach (Action<T> del in tSub[i].Callback.GetInvocationList())
-                        {
-                            tSub[i].Callback -= del.Target.Equals(null) ? del : default;
-                        }
+                        List<Action<T>> badSubs = subs[i].Callback.GetInvocationList().
+                            Where((Delegate del) => { return del.Target.Equals(null); }).
+                            ToList() as List<Action<T>>;
+                        
 
-                        if (tSub[i].Callback == null)
+                        while(badSubs.Count() > 0)
                         {
-                            m_subscriptions[a_message].RemoveAt(i);
-                            i--;
-                        }
-
-                        else
-                        {
-                            m_subscriptions[a_message][i] = tSub[i];
+                            subs[i].Callback -= badSubs[0];
+                            badSubs.RemoveAt(0);
                         }
                     }
                     
                     catch (NullReferenceException)
                     {
-                        tSub.RemoveAt(i);
-                        i--;
+                        subs.RemoveAt(i--);
                     }
                 }
             }
@@ -155,7 +148,7 @@ namespace Mouledoux.Mediation
 
                 if (m_subscriptions.Count == 0)
                 {
-                    OnCatalogueEmpty?.Invoke(typeof(T));
+                    OnCatalogueEmpty?.Invoke();
                 }
             }
 
@@ -164,10 +157,10 @@ namespace Mouledoux.Mediation
 
 
 
-        private static void Subscribe(string a_message, Action<T> a_callback, int a_priority = 0)
+        private static void Subscribe(string a_message, Action<T> a_callback, int a_priority = 0, bool a_acceptStaleMesages = false)
         {
             Subscription sub = new Subscription(a_message, a_callback, a_priority);
-            Subscribe(sub);
+            Subscribe(sub, a_acceptStaleMesages);
         }
 
         private static void Subscribe(Subscription a_sub, bool a_acceptStaleMesages = false)
