@@ -38,6 +38,7 @@
     <Compile Include="Callback\Callback.cs" />
     <Compile Include="Components\DecisionTree.cs" />
     <Compile Include="Components\FiniteStateMachine.cs" />
+    <Compile Include="Components\StateMachine.cs" />
     <Compile Include="TypeCast\Rosetta.cs" />
     <Compile Include="Mediation\Catalogue.cs" />
     <Compile Include="Mediation\Mediator.cs" />
