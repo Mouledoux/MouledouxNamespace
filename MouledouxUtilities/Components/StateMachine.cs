@@ -7,53 +7,20 @@ namespace Mouledoux.Components
     {
         public State currentState { get; private set; }
         public State anyState { get; private set; }
-        private List<Condition> allConditions = new List<Condition>();
+
 
         public void Initialize(State initState)
         {
             currentState = initState;
         }
 
-        public bool Update(bool autoUpdateConditions = true)
+        public bool Update(bool autoPerformConditionUpdates = false)
         {
             currentState.onStateUpdate();
-
-            if (autoUpdateConditions) { UpdateAllConditions(); }
-            
-            return PerformTransistion(GetValidTransition(currentState.availableTransitions)) ||
-                PerformTransistion(GetValidTransition(anyState.availableTransitions));
+            PerformTransistion(currentState.GetNextValidTransistion(autoPerformConditionUpdates));
+            return true;
         }
 
-        public void UpdateAllConditions()
-        {
-            foreach (Condition c in allConditions)
-            {
-                c.CheckResults();
-            }
-        }
-
-        private Transistion GetValidTransition(Transistion[] transitions)
-        {
-            bool pass;
-            
-            foreach (Transistion t in transitions)
-            {
-                if(t.targetState == anyState) { continue; }
-
-                pass = true;
-
-                foreach (int i in t.transitionConditions)
-                {
-                    if (i < 0 || i > allConditions.Count) { continue; }
-                    
-                    pass = allConditions[i].lastCheckedResult & pass;
-                }
-
-                if (pass) return t;
-            }
-
-            return default;
-        }
 
         private bool PerformTransistion(Transistion t)
         {
@@ -66,13 +33,6 @@ namespace Mouledoux.Components
             return true;
         }
 
-
-        public int GetConditionIndex(Condition cond)
-        {
-            if (!allConditions.Contains(cond)) { return -1; }
-            
-            return allConditions.IndexOf(cond);
-        }
 
 
         public sealed class State
@@ -95,6 +55,16 @@ namespace Mouledoux.Components
                 onStateExit = onExit;
             }
 
+            public Transistion GetNextValidTransistion(bool performCondition = false)
+            {
+                foreach(Transistion t in availableTransitions)
+                {
+                    if(t.CheckConditionResults(performCondition)) { return t; }
+                }
+
+                return default;
+            }
+
             public Transistion[] availableTransitions { get; set; }
         }
 
@@ -102,14 +72,38 @@ namespace Mouledoux.Components
         public sealed class Transistion
         {
             public State targetState { get; private set; }
-            public int[] transitionConditions { get; private set; }
+            public Condition[] transitionConditions { get; private set; }
 
-            public Transistion(State target, int[] condIndex)
+            public Transistion(State target, Condition[] condIndex)
             {
                 targetState = target;
                 transitionConditions = condIndex;
             }
+
+
+            public bool CheckConditionResults(bool performCondition = false)
+            {
+                bool pass = true;
+                
+                if(performCondition)
+                {
+                    foreach(Condition c in transitionConditions)
+                    {
+                        pass = c.CheckResults() && pass;
+                    }
+                }
+                else
+                {
+                    foreach (Condition c in transitionConditions)
+                    {
+                        pass = c.lastCheckedResult && pass;
+                    }
+                }
+
+                return pass;
+            }
         }
+
 
 
         public sealed class Condition
@@ -118,14 +112,9 @@ namespace Mouledoux.Components
 
             private Func<bool> conditionDelegate = default;
 
-            public Condition(StateMachine sm, Func<bool> cond)
+            public Condition(Func<bool> cond)
             {
                 conditionDelegate = cond == null ? default : cond;
-
-                if (!sm.allConditions.Contains(this))
-                {
-                    sm.allConditions.Add(this);
-                }
             }
 
             public bool CheckResults()
@@ -152,7 +141,7 @@ namespace Mouledoux.Components
 
             private StateMachine.State sInit;
             private StateMachine.State sAtHome;
-            private StateMachine.State sLeavingHome;
+            private StateMachine.State sLeaving;
             private StateMachine.State sChasing;
             private StateMachine.State sFleeing;
             private StateMachine.State sWander;
@@ -160,42 +149,66 @@ namespace Mouledoux.Components
 
             private StateMachine.Condition isDead;
             private StateMachine.Condition isHome;
+            private StateMachine.Condition isLeaving;
+            private StateMachine.Condition isFlee;
+            private StateMachine.Condition notFlee;
+            private StateMachine.Condition isChase;
+            private StateMachine.Condition isWander;
+
 
             private StateMachine.Transistion toDead;
             private StateMachine.Transistion toHome;
+            private StateMachine.Transistion toLeaving;
+            private StateMachine.Transistion toFlee;
+            private StateMachine.Transistion toChase;
+            private StateMachine.Transistion toWander;
 
 
             public void OnStart()
             {
-                isDead = new Condition(ghostSM, () => { return edible && pacDist < 1; });
-                isHome = new Condition(ghostSM, () => { return homeDist < 1; });
+                isDead = new Condition(() => { return edible && pacDist < 1; });
+                isHome = new Condition(() => { return homeDist < 1; });
+                isLeaving = new Condition(() => { return homeTimer < 1; });
+                isWander = new Condition(() => { return pacDist > 5f; });
+                isChase = new Condition(() => { return pacDist < 6f; });
+                isFlee = new Condition(() => { return edible; });
+                notFlee = new Condition(() => { return !edible; });
 
 
-                toDead = new Transistion(sDead, new int[]{ 0 });
-                toHome = new Transistion(sDead, new int[]{ 1 });
+                toDead = new Transistion(sDead, new Condition[]{ isDead });
+                toHome = new Transistion(sAtHome, new Condition[]{ isHome });
+                toLeaving = new Transistion(sAtHome, new Condition[]{ isLeaving });
+                toWander = new Transistion(sWander, new Condition[] { notFlee, isWander });
+                toChase = new Transistion(sChasing, new Condition[] {notFlee, isChase });
+                toFlee = new Transistion(sFleeing, new Condition[] { isFlee });
 
 
-                ghostSM.anyState.availableTransitions = new Transistion[] { toDead };
+                sInit.availableTransitions = new Transistion[] { toHome };
+                sAtHome.availableTransitions = new Transistion[] { toLeaving };
+                sLeaving.availableTransitions = new Transistion[] { toChase, toWander };
+                sWander.availableTransitions = new Transistion[] { toChase, toFlee };
+                sChasing.availableTransitions = new Transistion[] { toWander, toFlee };
+                sFleeing.availableTransitions = new Transistion[] { toDead, toChase, toWander };
+                sDead.availableTransitions = new Transistion[] { toHome };
 
 
-                sInit.availableTransitions = new Transistion[] { };
-                sAtHome.availableTransitions = new Transistion[] { toHome };
-                sLeavingHome.availableTransitions = new Transistion[] { };
-                sChasing.availableTransitions = new Transistion[] { };
-                sFleeing.availableTransitions = new Transistion[] { };
-                sWander.availableTransitions = new Transistion[] { };
-                sDead.availableTransitions = new Transistion[] { };
-
-
-                sAtHome.onStateEnter += () => { homeTimer -= 0.016f; };
+                sAtHome.onStateEnter += () => { homeTimer = 8f; };
                 sAtHome.onStateUpdate += () => { homeTimer -= 0.016f; };
-                
 
+                sLeaving.onStateEnter += () => { /*do animation*/ };
+
+                sWander.onStateUpdate += () => { /*do path-finding*/ };
+                sChasing.onStateUpdate += () => { /*do different path-finding*/ };
+                sFleeing.onStateUpdate += () => { /*do backwards path-finding*/ };
+
+                sDead.onStateEnter += () => { /*sprite swap*/ };
+                sDead.onStateUpdate += () => { /*go home*/ };
+                sDead.onStateExit += () => { /*sprite swap*/ };
             }
 
             public void OnUpdate()
             {
-
+                ghostSM.Update();
             }
 
         }
