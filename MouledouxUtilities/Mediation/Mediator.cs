@@ -18,11 +18,13 @@ namespace Mouledoux.Mediation
             string addTypeMessage = "AddTypeToTranslator";
             string removeTypeMessage = "RemoveTypeFromTranslator";
 
-            addTypeSub = new Catalogue<Type>.Subscription(addTypeMessage,
-                (Type t) => m_knownTypes.Add(t), 99).Subscribe();
+            Catalogue<Type, float>.NotifySubscribers(4);
 
-            removeTypeSub = new Catalogue<Type>.Subscription(removeTypeMessage,
-                (Type t) => m_knownTypes.Remove(t), 99).Subscribe();
+            //addTypeSub = new Catalogue<Type>.Subscription(addTypeMessage,
+            //    (Type t) => m_knownTypes.Add(t), 99).Subscribe();
+
+            //removeTypeSub = new Catalogue<Type>.Subscription(removeTypeMessage,
+            //    (Type t) => m_knownTypes.Remove(t), 99).Subscribe();
         }
 
 
@@ -55,6 +57,8 @@ namespace Mouledoux.Mediation
 
         public static void TryAddTypedSubscription<T>()
         {
+            Catalogue<int, float>.NotifySubscribers(4);
+
             Type type = typeof(T);
             if (!m_knownTypes.Contains(type))
             {

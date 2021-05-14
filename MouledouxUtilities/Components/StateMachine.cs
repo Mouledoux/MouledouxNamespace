@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq;
 using System.Collections.Generic;
 
 namespace Mouledoux.Components
@@ -9,29 +10,30 @@ namespace Mouledoux.Components
         public State anyState { get; private set; }
 
 
-        public void Initialize(State initState)
+        public void Initialize(State a_initState)
         {
-            currentState = initState;
+            currentState = a_initState;
         }
 
-        public bool Update(bool autoPerformConditionUpdates = false)
+        public bool Update(bool a_autoInvokeConditions = false)
         {
             currentState.onStateUpdate();
-            PerformTransistion(currentState.GetNextValidTransistion(autoPerformConditionUpdates));
+            PerformTransistion(currentState.GetNextValidTransistion(a_autoInvokeConditions));
             return true;
         }
 
-
-        private bool PerformTransistion(Transistion t)
+        private bool PerformTransistion(Transistion a_transition)
         {
-            if (t == null || t == default) return false;
+            if (a_transition == null || a_transition == default) return false;
 
             currentState.onStateExit?.Invoke();
-            currentState = t.targetState;
+            currentState = a_transition.targetState;
             currentState.onStateEnter?.Invoke();
 
             return true;
         }
+        // end StateMachine Class // ---------- ---------- ---------- 
+
 
 
 
@@ -41,6 +43,9 @@ namespace Mouledoux.Components
             public Action onStateUpdate { get; set; }
             public Action onStateExit { get; set; }
 
+            public Transistion[] availableTransitions { get; set; }
+
+
             public State()
             {
                 onStateEnter = default;
@@ -48,25 +53,28 @@ namespace Mouledoux.Components
                 onStateExit = default;
             }
 
-            public State(Action onEnter, Action onUpdate, Action onExit)
+            public State(Action a_onEnter, Action a_onUpdate, Action a_onExit)
             {
-                onStateEnter = onEnter;
-                onStateUpdate = onUpdate;
-                onStateExit = onExit;
+                onStateEnter = a_onEnter;
+                onStateUpdate = a_onUpdate;
+                onStateExit = a_onExit;
             }
 
-            public Transistion GetNextValidTransistion(bool performCondition = false)
+            public Transistion GetNextValidTransistion(bool a_invokeConditions = false)
             {
-                foreach(Transistion t in availableTransitions)
+                foreach(Transistion _potentialTransition in availableTransitions)
                 {
-                    if(t.CheckConditionResults(performCondition)) { return t; }
+                    if(_potentialTransition.CheckConditionResults(a_invokeConditions))
+                    {
+                        return _potentialTransition;
+                    }
                 }
 
                 return default;
             }
 
-            public Transistion[] availableTransitions { get; set; }
         }
+        // end State class ---------- ---------- ---------- 
 
 
         public sealed class Transistion
@@ -74,35 +82,31 @@ namespace Mouledoux.Components
             public State targetState { get; private set; }
             public Condition[] transitionConditions { get; private set; }
 
-            public Transistion(State target, Condition[] condIndex)
+            public Transistion(State a_targetState, Condition[] a_conditions)
             {
-                targetState = target;
-                transitionConditions = condIndex;
+                targetState = a_targetState;
+                transitionConditions = a_conditions;
             }
 
 
-            public bool CheckConditionResults(bool performCondition = false)
+            public bool CheckConditionResults(bool a_invokeConditions = false)
             {
-                bool pass = true;
+                bool _conditionResults = true;
                 
-                if(performCondition)
+                if(a_invokeConditions)
                 {
-                    foreach(Condition c in transitionConditions)
+                    foreach(Condition _condition in transitionConditions)
                     {
-                        pass = c.CheckResults() && pass;
-                    }
-                }
-                else
-                {
-                    foreach (Condition c in transitionConditions)
-                    {
-                        pass = c.lastCheckedResult && pass;
+                        _conditionResults &= a_invokeConditions
+                            ? _condition.InvokeCheckConditionResults()
+                            : _condition.lastCheckedResult;
                     }
                 }
 
-                return pass;
+                return _conditionResults;
             }
         }
+        // end Transition class ---------- ---------- ---------- 
 
 
 
@@ -112,17 +116,39 @@ namespace Mouledoux.Components
 
             private Func<bool> conditionDelegate = default;
 
-            public Condition(Func<bool> cond)
+            public Condition(Func<bool> a_condition)
             {
-                conditionDelegate = cond == null ? default : cond;
+                conditionDelegate = a_condition == null ? default : a_condition;
             }
 
-            public bool CheckResults()
+            public bool InvokeCheckConditionResults()
             {
-                lastCheckedResult = conditionDelegate.Invoke();
-                return lastCheckedResult;
+                return lastCheckedResult =
+                conditionDelegate.GetInvocationList().All(a_condition =>
+                {
+                    return a_condition is Func<bool> _fb && _fb.Invoke();
+                });
+            }
+
+            public static explicit operator Condition (Func<bool> a_func)
+            {
+                return new Condition(a_func);
+            }
+            
+            public static explicit operator Condition (Func<bool>[] a_funcs)
+            {
+                Func<bool> _newConditionDelegate = default;
+                Condition _newCondition = new Condition(_newConditionDelegate);
+
+                foreach(Func<bool> _fb in a_funcs)
+                {
+                    _newConditionDelegate += _fb;
+                }
+
+                return _newCondition;
             }
         }
+        // end Condition class ---------- ---------- ---------- 
 
 
 
@@ -139,43 +165,51 @@ namespace Mouledoux.Components
 
             private StateMachine ghostSM;
 
-            private StateMachine.State sInit;
-            private StateMachine.State sAtHome;
-            private StateMachine.State sLeaving;
-            private StateMachine.State sChasing;
-            private StateMachine.State sFleeing;
-            private StateMachine.State sWander;
-            private StateMachine.State sDead;
+            private State sInit;
+            private State sAtHome;
+            private State sLeaving;
+            private State sChasing;
+            private State sFleeing;
+            private State sWander;
+            private State sDead;
 
-            private StateMachine.Condition isDead;
-            private StateMachine.Condition isHome;
-            private StateMachine.Condition isLeaving;
-            private StateMachine.Condition isFlee;
-            private StateMachine.Condition notFlee;
-            private StateMachine.Condition isChase;
-            private StateMachine.Condition isWander;
+            private Condition isDead;
+            private Condition isHome;
+            private Condition isLeaving;
+            private Condition isFlee;
+            private Condition notFlee;
+            private Condition isChase;
+            private Condition isWander;
 
 
-            private StateMachine.Transistion toDead;
-            private StateMachine.Transistion toHome;
-            private StateMachine.Transistion toLeaving;
-            private StateMachine.Transistion toFlee;
-            private StateMachine.Transistion toChase;
-            private StateMachine.Transistion toWander;
+            private Transistion toDead;
+            private Transistion toHome;
+            private Transistion toLeaving;
+            private Transistion toFlee;
+            private Transistion toChase;
+            private Transistion toWander;
 
 
             public void OnStart()
             {
+                Func<bool> chaseZac = ChaseTarget;
+                chaseZac += ChaseTarget;
+                chaseZac += ChaseTarget;
+                chaseZac += ChaseTarget;
+                chaseZac += ChaseTarget;
+                chaseZac += ChaseTarget;
+                chaseZac += ChaseTarget;
+                chaseZac += ChaseTarget;
+
                 isDead = new Condition(() => { return edible && pacDist < 1; });
                 isHome = new Condition(() => { return homeDist < 1; });
                 isLeaving = new Condition(() => { return homeTimer < 1; });
                 isWander = new Condition(() => { return pacDist > 5f; });
-                isChase = new Condition(() => { return pacDist < 6f; });
+                isChase = (Condition)new[] { chaseZac, chaseZac, chaseZac, ChaseTarget };
                 isFlee = new Condition(() => { return edible; });
                 notFlee = new Condition(() => { return !edible; });
 
-
-                toDead = new Transistion(sDead, new Condition[]{ isDead });
+              
                 toHome = new Transistion(sAtHome, new Condition[]{ isHome });
                 toLeaving = new Transistion(sAtHome, new Condition[]{ isLeaving });
                 toWander = new Transistion(sWander, new Condition[] { notFlee, isWander });
@@ -204,11 +238,18 @@ namespace Mouledoux.Components
                 sDead.onStateEnter += () => { /*sprite swap*/ };
                 sDead.onStateUpdate += () => { /*go home*/ };
                 sDead.onStateExit += () => { /*sprite swap*/ };
+
+                ghostSM.Initialize(sInit);
             }
 
             public void OnUpdate()
             {
                 ghostSM.Update();
+            }
+
+            public bool ChaseTarget()
+            {
+                return homeDist < 3;
             }
 
         }
