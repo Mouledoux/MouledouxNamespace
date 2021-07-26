@@ -10,15 +10,15 @@ namespace Mouledoux.Mediation
     public static class CatalogueMediator
     {
         private static HashSet<Type> m_knownTypes = new HashSet<Type>() { typeof(object), typeof(Type) };
-        private static readonly Catalogue<Type>.Subscription addTypeSub;
-        private static readonly Catalogue<Type>.Subscription removeTypeSub;
+        // private static readonly Catalogue<Type, Type>.Subscription addTypeSub;
+        // private static readonly Catalogue<Type, Type>.Subscription removeTypeSub;
 
         static CatalogueMediator()
         {
-            string addTypeMessage = "AddTypeToTranslator";
-            string removeTypeMessage = "RemoveTypeFromTranslator";
+            // string addTypeMessage = "AddTypeToTranslator";
+            // string removeTypeMessage = "RemoveTypeFromTranslator";
 
-            Catalogue<Type, float>.NotifySubscribers(4);
+            // Catalogue<Type, float>.NotifySubscribers(4f);
 
             //addTypeSub = new Catalogue<Type>.Subscription(addTypeMessage,
             //    (Type t) => m_knownTypes.Add(t), 99).Subscribe();
@@ -50,7 +50,7 @@ namespace Mouledoux.Mediation
                 else if (Rosetta.TryGetExplicitCastFromTo(typeT, type, out MethodInfo o_implicit))
                 {
                     dynamic arg = o_implicit == null ? a_arg : o_implicit.Invoke(null, new object[] { a_arg });
-                    Rosetta.InvokeGenericMethodAsType(null, "NotifySubscribers", new object[] { a_message, arg, a_holdMessage }, typeof(Catalogue<>), type);
+                    //Rosetta.InvokeGenericMethodAsType(null, "NotifySubscribers", new object[] { a_message, arg, a_holdMessage }, typeof(Catalogue<>), type);
                 }
             }
         }
@@ -63,7 +63,7 @@ namespace Mouledoux.Mediation
             if (!m_knownTypes.Contains(type))
             {
                 m_knownTypes.Add(type);
-                Catalogue<T>.OnCatalogueEmpty += () => m_knownTypes.Remove(type);
+                //Catalogue<T>.OnCatalogueEmpty += () => m_knownTypes.Remove(type);
             }
         }
     }

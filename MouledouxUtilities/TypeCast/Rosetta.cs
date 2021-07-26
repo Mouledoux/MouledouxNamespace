@@ -84,5 +84,11 @@ namespace Mouledoux.Casting
             o_method = cast?.FirstOrDefault();
             return cast?.Count() > 0;
         }
+
+        private static object[] GetAllPublicFieldMembers(Type a_type)
+        {
+            FieldInfo[] _fields = a_type.GetFields();
+            return new object[] {};
+        }
     }
 }
