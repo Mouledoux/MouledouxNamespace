@@ -65,7 +65,6 @@ namespace Mouledoux.API
             using (Stream _requestBody = _request.GetRequestStream())
             {
                 _requestBody.Write(dataBytes, 0, dataBytes.Length);
-
                 _requestBody.Close();
             }
 
@@ -97,7 +96,6 @@ namespace Mouledoux.API
             using (Stream _requestBody = _request.GetRequestStream())
             {
                 await _requestBody.WriteAsync(_dataBytes, 0, _dataBytes.Length);
-
                 _requestBody.Close();
             }
 
