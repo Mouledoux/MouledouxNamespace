@@ -35,7 +35,7 @@
     <LangVersion>7.1</LangVersion>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Include="API\JsonSerialization.cs" />
+    <Compile Include="API\EZTCP.cs" />
     <Compile Include="API\NetRequest.cs" />
     <Compile Include="Callback\Callback.cs" />
     <Compile Include="Components\DecisionTree.cs" />
