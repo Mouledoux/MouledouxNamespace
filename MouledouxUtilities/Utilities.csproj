@@ -38,6 +38,7 @@
     <Compile Include="API\EZTCP.cs" />
     <Compile Include="API\NetRequest.cs" />
     <Compile Include="Callback\Callback.cs" />
+    <Compile Include="Callback\Logger.cs" />
     <Compile Include="Components\DecisionTree.cs" />
     <Compile Include="Components\FiniteStateMachine.cs" />
     <Compile Include="Components\StateMachine.cs" />
