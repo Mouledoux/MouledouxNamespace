@@ -8,18 +8,27 @@ namespace Mouledoux.Components
     {
         public State currentState { get; private set; }
         public State anyState { get; private set; }
+        public bool enableAnyState = true;
 
 
-        public void Initialize(State a_initState)
+        public void Initialize(State a_initState, bool a_enableAnyState = true)
         {
             currentState = a_initState;
+            enableAnyState = a_enableAnyState;
+            anyState = default;
         }
 
         public bool Update(bool a_autoInvokeConditions = false)
         {
             currentState.onStateUpdate();
-            PerformTransistion(currentState.GetNextValidTransistion(a_autoInvokeConditions));
-            return true;
+
+            Transistion _possibleCurrentStateTransition = currentState.GetNextValidTransistion(a_autoInvokeConditions);
+            Transistion _nextValidTransition = _possibleCurrentStateTransition == default ?
+                GetAnyStateTransition() : _possibleCurrentStateTransition;
+
+            bool _transitionWasValid = PerformTransistion(_nextValidTransition);
+
+            return _transitionWasValid;
         }
 
         private bool PerformTransistion(Transistion a_transition)
@@ -31,6 +40,15 @@ namespace Mouledoux.Components
             currentState.onStateEnter?.Invoke();
 
             return true;
+        }
+
+        private Transistion GetAnyStateTransition(bool a_autoInvokeConditions = false)
+        {
+            if (enableAnyState == false) return default;
+
+            Transistion _targetTransition = anyState.GetNextValidTransistion(a_autoInvokeConditions);
+
+            return _targetTransition;
         }
         // end StateMachine Class // ---------- ---------- ---------- 
 
