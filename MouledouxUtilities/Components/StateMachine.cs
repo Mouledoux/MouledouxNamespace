@@ -1,15 +1,29 @@
 ﻿using System;
 using System.Linq;
-using System.Collections.Generic;
 
 namespace Mouledoux.Components
 {
     public sealed class StateMachine
     {
-        public State currentState { get; private set; }
-        public State anyState { get; private set; }
-        public bool enableAnyState = true;
+        private State currentState;
+        private State anyState;
+        private bool enableAnyState = true;
 
+        public State CurrentState
+        {
+            get => currentState;
+            private set => currentState = value;
+        }
+        public State AnyState
+        {
+            get => anyState;
+        }
+
+        public StateMachine()
+        {
+            currentState = default;
+            anyState = new State();
+        }
 
         public void Initialize(State a_initState, bool a_enableAnyState = true)
         {
@@ -20,33 +34,73 @@ namespace Mouledoux.Components
 
         public bool Update(bool a_autoInvokeConditions = false)
         {
-            currentState.onStateUpdate();
+            bool _results = false;
 
-            Transistion _possibleCurrentStateTransition = currentState.GetNextValidTransistion(a_autoInvokeConditions);
-            Transistion _nextValidTransition = _possibleCurrentStateTransition == default ?
-                GetAnyStateTransition() : _possibleCurrentStateTransition;
+            if(CurrentState.StateIsValid)
+            {
+                CurrentState.OnStateUpdate();
 
-            bool _transitionWasValid = PerformTransistion(_nextValidTransition);
+                Transition _nextTransition = default;
+                bool _isFromAnyState = false;
 
-            return _transitionWasValid;
+                if (enableAnyState)
+                {
+                    _isFromAnyState = true;
+                    _nextTransition = GetNextValidOrAnyTransition(CurrentState, a_autoInvokeConditions);
+                }
+                else
+                {
+                    CurrentState.GetNextValidTransition(a_autoInvokeConditions);
+                }
+
+                _results = PerformTransition(_nextTransition, _isFromAnyState);
+            }
+
+            return _results;
         }
 
-        private bool PerformTransistion(Transistion a_transition)
+        private bool PerformTransition(Transition a_transition, bool a_isFromAnyState = false)
         {
-            if (a_transition == null || a_transition == default) return false;
+            bool _validTransition = a_transition.TransitionIsValid;
+            bool _isToAnyState = a_transition.TargetState == anyState;    // transitions to the anyState are not valid/supported
+            bool _results = _validTransition && !_isToAnyState;
 
-            currentState.onStateExit?.Invoke();
-            currentState = a_transition.targetState;
-            currentState.onStateEnter?.Invoke();
+            if (_results)
+            {
+                CurrentState.OnStateExit?.Invoke();
+                CurrentState = a_transition.TargetState;
+                CurrentState.OnStateEnter?.Invoke();
+            }
 
-            return true;
+            if(a_isFromAnyState && enableAnyState)
+            {
+                AnyState?.OnStateEnter?.Invoke();
+                AnyState?.OnStateUpdate?.Invoke();
+                AnyState?.OnStateExit?.Invoke();
+            }
+
+            return _results;
         }
 
-        private Transistion GetAnyStateTransition(bool a_autoInvokeConditions = false)
+        private Transition GetNextValidOrAnyTransition(State a_state, bool a_autoInvokeConditions)
         {
-            if (enableAnyState == false) return default;
+            Transition _nextTransition = a_state.GetNextValidTransition(a_autoInvokeConditions);
 
-            Transistion _targetTransition = anyState.GetNextValidTransistion(a_autoInvokeConditions);
+            _nextTransition = _nextTransition.TransitionIsValid
+                ? _nextTransition
+                : GetAnyStateTransition(a_autoInvokeConditions);
+
+            return _nextTransition;
+        }
+
+        private Transition GetAnyStateTransition(bool a_autoInvokeConditions = false)
+        {
+            if (enableAnyState == false)
+            {
+                return default;
+            }
+
+            Transition _targetTransition = anyState.GetNextValidTransition(a_autoInvokeConditions);
 
             return _targetTransition;
         }
@@ -57,71 +111,138 @@ namespace Mouledoux.Components
 
         public sealed class State
         {
-            public Action onStateEnter { get; set; }
-            public Action onStateUpdate { get; set; }
-            public Action onStateExit { get; set; }
+            private Action onStateEnter;
+            public Action OnStateEnter
+            {
+                get
+                {
+                    return onStateEnter;
+                }
+                set
+                {
+                    onStateEnter = value;
+                }
+            }
 
-            public Transistion[] availableTransitions { get; set; }
+            private Action onStateUpdate;
+            public Action OnStateUpdate
+            {
+                get
+                {
+                    return onStateUpdate;
+                }
+                set
+                {
+                    onStateUpdate = value;
+                }
+            }
 
+            private Action onStateExit;
+            public Action OnStateExit
+            {
+                get
+                {
+                    return onStateExit;
+                }
+                set
+                {
+                    onStateExit = value;
+                }
+            }
+
+            private Transition[] availableTransitions;
+            public Transition[] AvailableTransitions
+            {
+                get
+                {
+                    return availableTransitions;
+                }
+                set
+                {
+                    availableTransitions = value;
+                }
+            }
+
+            public bool StateIsValid => this != null && this != default;
 
             public State()
             {
-                onStateEnter = default;
-                onStateUpdate = default;
-                onStateExit = default;
+                OnStateEnter = default;
+                OnStateUpdate = default;
+                OnStateExit = default;
             }
 
             public State(Action a_onEnter, Action a_onUpdate, Action a_onExit)
             {
-                onStateEnter = a_onEnter;
-                onStateUpdate = a_onUpdate;
-                onStateExit = a_onExit;
+                OnStateEnter = a_onEnter;
+                OnStateUpdate = a_onUpdate;
+                OnStateExit = a_onExit;
             }
 
-            public Transistion GetNextValidTransistion(bool a_invokeConditions = false)
+            public Transition GetNextValidTransition(bool a_invokeConditions = false)
             {
-                foreach(Transistion _potentialTransition in availableTransitions)
+                Transition _results = default;
+
+                foreach(Transition _potentialTransition in AvailableTransitions)
                 {
                     if(_potentialTransition.CheckConditionResults(a_invokeConditions))
                     {
-                        return _potentialTransition;
+                        _results = _potentialTransition;
+                        break;
                     }
                 }
 
-                return default;
+                return _results;
             }
 
         }
-        // end State class ---------- ---------- ---------- 
+        // end State class // ---------- ---------- ---------- 
 
 
-        public sealed class Transistion
+        public sealed class Transition
         {
-            public State targetState { get; private set; }
-            public Condition[] transitionConditions { get; private set; }
-
-            public Transistion(State a_targetState, Condition[] a_conditions)
+            private State targetState;
+            public State TargetState
             {
-                targetState = a_targetState;
-                transitionConditions = a_conditions;
+                get
+                {
+                    return targetState;
+                }
+                private set
+                {
+                    targetState = value;
+                }
+            }
+
+            private Condition[] transitionConditions;
+            public Condition[] TransitionConditions
+            {
+                get
+                {
+                    return transitionConditions;
+                }
+                private set
+                {
+                    transitionConditions = value;
+                }
+            }
+
+            public bool TransitionIsValid => this != null && this != default;
+
+            public Transition(State a_targetState, Condition[] a_conditions)
+            {
+                TargetState = a_targetState;
+                TransitionConditions = a_conditions;
             }
 
 
             public bool CheckConditionResults(bool a_invokeConditions = false)
             {
-                bool _conditionResults = true;
-                
-                if(a_invokeConditions)
-                {
-                    foreach(Condition _condition in transitionConditions)
-                    {
-                        _conditionResults &= a_invokeConditions
-                            ? _condition.InvokeCheckConditionResults()
-                            : _condition.lastCheckedResult;
-                    }
-                }
+                bool _results = a_invokeConditions
+                    ? TransitionConditions.All(_cond => _cond.InvokeCheckConditionResults())
+                    : TransitionConditions.All(_cond => _cond.LastCheckedResult);
 
-                return _conditionResults;
+                return _results;
             }
         }
         // end Transition class ---------- ---------- ---------- 
@@ -130,7 +251,18 @@ namespace Mouledoux.Components
 
         public sealed class Condition
         {
-            public bool lastCheckedResult { get; private set; }
+            private bool lastCheckedResult;
+            public bool LastCheckedResult
+            {
+                get
+                {
+                    return lastCheckedResult;
+                }
+                private set
+                {
+                    lastCheckedResult = value;
+                }
+            }
 
             private Func<bool> conditionDelegate = default;
 
@@ -141,11 +273,15 @@ namespace Mouledoux.Components
 
             public bool InvokeCheckConditionResults()
             {
-                return lastCheckedResult =
+                bool _results  =
                 conditionDelegate.GetInvocationList().All(a_condition =>
                 {
                     return a_condition is Func<bool> _fb && _fb.Invoke();
                 });
+
+                LastCheckedResult = _results;
+
+                return _results;
             }
 
             public static explicit operator Condition (Func<bool> a_func)
@@ -200,13 +336,17 @@ namespace Mouledoux.Components
             private Condition isWander;
 
 
-            private Transistion toDead;
-            private Transistion toHome;
-            private Transistion toLeaving;
-            private Transistion toFlee;
-            private Transistion toChase;
-            private Transistion toWander;
+            private Transition toDead;
+            private Transition toHome;
+            private Transition toLeaving;
+            private Transition toFlee;
+            private Transition toChase;
+            private Transition toWander;
 
+            bool ChaseZacc()
+            {
+                return true;
+            }
 
             public void OnStart()
             {
@@ -223,39 +363,39 @@ namespace Mouledoux.Components
                 isHome = new Condition(() => { return homeDist < 1; });
                 isLeaving = new Condition(() => { return homeTimer < 1; });
                 isWander = new Condition(() => { return pacDist > 5f; });
-                isChase = (Condition)new[] { chaseZac, chaseZac, chaseZac, ChaseTarget };
+                isChase = (Condition)new[] { chaseZac, chaseZac, chaseZac, ChaseTarget, ChaseZacc };
                 isFlee = new Condition(() => { return edible; });
                 notFlee = new Condition(() => { return !edible; });
 
               
-                toHome = new Transistion(sAtHome, new Condition[]{ isHome });
-                toLeaving = new Transistion(sAtHome, new Condition[]{ isLeaving });
-                toWander = new Transistion(sWander, new Condition[] { notFlee, isWander });
-                toChase = new Transistion(sChasing, new Condition[] {notFlee, isChase });
-                toFlee = new Transistion(sFleeing, new Condition[] { isFlee });
+                toHome = new Transition(sAtHome, new Condition[]{ isHome });
+                toLeaving = new Transition(sAtHome, new Condition[]{ isLeaving });
+                toWander = new Transition(sWander, new Condition[] { notFlee, isWander });
+                toChase = new Transition(sChasing, new Condition[] {notFlee, isChase });
+                toFlee = new Transition(sFleeing, new Condition[] { isFlee });
+
+                ghostSM.anyState.AvailableTransitions = new Transition[] { toFlee };
+                sInit.AvailableTransitions = new Transition[] { toHome };
+                sAtHome.AvailableTransitions = new Transition[] { toLeaving };
+                sLeaving.AvailableTransitions = new Transition[] { toChase, toWander };
+                sWander.AvailableTransitions = new Transition[] { toChase, toFlee };
+                sChasing.AvailableTransitions = new Transition[] { toWander, toFlee };
+                sFleeing.AvailableTransitions = new Transition[] { toDead, toChase, toWander };
+                sDead.AvailableTransitions = new Transition[] { toHome };
 
 
-                sInit.availableTransitions = new Transistion[] { toHome };
-                sAtHome.availableTransitions = new Transistion[] { toLeaving };
-                sLeaving.availableTransitions = new Transistion[] { toChase, toWander };
-                sWander.availableTransitions = new Transistion[] { toChase, toFlee };
-                sChasing.availableTransitions = new Transistion[] { toWander, toFlee };
-                sFleeing.availableTransitions = new Transistion[] { toDead, toChase, toWander };
-                sDead.availableTransitions = new Transistion[] { toHome };
+                sAtHome.OnStateEnter += () => { homeTimer = 8f; };
+                sAtHome.OnStateUpdate += () => { homeTimer -= 0.016f; };
 
+                sLeaving.OnStateEnter += () => { /*do animation*/ };
 
-                sAtHome.onStateEnter += () => { homeTimer = 8f; };
-                sAtHome.onStateUpdate += () => { homeTimer -= 0.016f; };
+                sWander.OnStateUpdate += () => { /*do path-finding*/ };
+                sChasing.OnStateUpdate += () => { /*do different path-finding*/ };
+                sFleeing.OnStateUpdate += () => { /*do backwards path-finding*/ };
 
-                sLeaving.onStateEnter += () => { /*do animation*/ };
-
-                sWander.onStateUpdate += () => { /*do path-finding*/ };
-                sChasing.onStateUpdate += () => { /*do different path-finding*/ };
-                sFleeing.onStateUpdate += () => { /*do backwards path-finding*/ };
-
-                sDead.onStateEnter += () => { /*sprite swap*/ };
-                sDead.onStateUpdate += () => { /*go home*/ };
-                sDead.onStateExit += () => { /*sprite swap*/ };
+                sDead.OnStateEnter += () => { /*sprite swap*/ };
+                sDead.OnStateUpdate += () => { /*go home*/ };
+                sDead.OnStateExit += () => { /*sprite swap*/ };
 
                 ghostSM.Initialize(sInit);
             }
