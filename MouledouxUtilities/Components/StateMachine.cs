@@ -6,31 +6,65 @@ namespace Mouledoux.Components
     public sealed class StateMachine
     {
         private State currentState;
-        private State anyState;
-        private bool enableAnyState = true;
-
         public State CurrentState
         {
-            get => currentState;
-            private set => currentState = value;
+            get
+            {
+                return currentState;
+            }
+            private set
+            {
+                currentState = value;
+            }
         }
+
+
+        private State anyState;
         public State AnyState
         {
-            get => anyState;
+            get
+            {
+                return anyState;
+            }
+            private set
+            {
+                anyState = value;
+            }
         }
+
+
+        private bool anyStateEnabled = true;
+        public bool AnyStateEnabled
+        {
+            get
+            {
+                return anyStateEnabled;
+            }
+            private set
+            {
+                anyStateEnabled = value;
+            }
+        }
+
+
 
         public StateMachine()
         {
-            currentState = default;
-            anyState = new State();
+            Initialize(default, true);
+        }
+
+        public StateMachine(State a_initState, bool a_enableAnyState = true)
+        {
+            Initialize(a_initState, a_enableAnyState);
         }
 
         public void Initialize(State a_initState, bool a_enableAnyState = true)
         {
-            currentState = a_initState;
-            enableAnyState = a_enableAnyState;
+            CurrentState = a_initState;
+            AnyStateEnabled = a_enableAnyState;
             anyState = default;
         }
+
 
         public bool Update(bool a_autoInvokeConditions = false)
         {
@@ -43,7 +77,7 @@ namespace Mouledoux.Components
                 Transition _nextTransition = default;
                 bool _isFromAnyState = false;
 
-                if (enableAnyState)
+                if (AnyStateEnabled)
                 {
                     _isFromAnyState = true;
                     _nextTransition = GetNextValidOrAnyTransition(CurrentState, a_autoInvokeConditions);
@@ -59,10 +93,11 @@ namespace Mouledoux.Components
             return _results;
         }
 
+
         private bool PerformTransition(Transition a_transition, bool a_isFromAnyState = false)
         {
             bool _validTransition = a_transition.TransitionIsValid;
-            bool _isToAnyState = a_transition.TargetState == anyState;    // transitions to the anyState are not valid/supported
+            bool _isToAnyState = a_transition.TargetState == AnyState;    // transitions to the anyState are not valid/supported
             bool _results = _validTransition && !_isToAnyState;
 
             if (_results)
@@ -72,7 +107,7 @@ namespace Mouledoux.Components
                 CurrentState.OnStateEnter?.Invoke();
             }
 
-            if(a_isFromAnyState && enableAnyState)
+            if(a_isFromAnyState && AnyStateEnabled)
             {
                 AnyState?.OnStateEnter?.Invoke();
                 AnyState?.OnStateUpdate?.Invoke();
@@ -81,6 +116,7 @@ namespace Mouledoux.Components
 
             return _results;
         }
+
 
         private Transition GetNextValidOrAnyTransition(State a_state, bool a_autoInvokeConditions)
         {
@@ -93,14 +129,15 @@ namespace Mouledoux.Components
             return _nextTransition;
         }
 
+
         private Transition GetAnyStateTransition(bool a_autoInvokeConditions = false)
         {
-            if (enableAnyState == false)
+            if (AnyStateEnabled == false)
             {
                 return default;
             }
 
-            Transition _targetTransition = anyState.GetNextValidTransition(a_autoInvokeConditions);
+            Transition _targetTransition = AnyState.GetNextValidTransition(a_autoInvokeConditions);
 
             return _targetTransition;
         }
@@ -124,6 +161,7 @@ namespace Mouledoux.Components
                 }
             }
 
+
             private Action onStateUpdate;
             public Action OnStateUpdate
             {
@@ -136,6 +174,7 @@ namespace Mouledoux.Components
                     onStateUpdate = value;
                 }
             }
+
 
             private Action onStateExit;
             public Action OnStateExit
@@ -150,6 +189,7 @@ namespace Mouledoux.Components
                 }
             }
 
+
             private Transition[] availableTransitions;
             public Transition[] AvailableTransitions
             {
@@ -163,7 +203,11 @@ namespace Mouledoux.Components
                 }
             }
 
+
             public bool StateIsValid => this != null && this != default;
+
+
+
 
             public State()
             {
@@ -172,12 +216,14 @@ namespace Mouledoux.Components
                 OnStateExit = default;
             }
 
+
             public State(Action a_onEnter, Action a_onUpdate, Action a_onExit)
             {
                 OnStateEnter = a_onEnter;
                 OnStateUpdate = a_onUpdate;
                 OnStateExit = a_onExit;
             }
+
 
             public Transition GetNextValidTransition(bool a_invokeConditions = false)
             {
@@ -194,7 +240,6 @@ namespace Mouledoux.Components
 
                 return _results;
             }
-
         }
         // end State class // ---------- ---------- ---------- 
 
@@ -214,6 +259,7 @@ namespace Mouledoux.Components
                 }
             }
 
+
             private Condition[] transitionConditions;
             public Condition[] TransitionConditions
             {
@@ -227,7 +273,10 @@ namespace Mouledoux.Components
                 }
             }
 
+
             public bool TransitionIsValid => this != null && this != default;
+
+
 
             public Transition(State a_targetState, Condition[] a_conditions)
             {
@@ -264,12 +313,16 @@ namespace Mouledoux.Components
                 }
             }
 
+
             private Func<bool> conditionDelegate = default;
+
+
 
             public Condition(Func<bool> a_condition)
             {
                 conditionDelegate = a_condition == null ? default : a_condition;
             }
+
 
             public bool InvokeCheckConditionResults()
             {
@@ -284,11 +337,13 @@ namespace Mouledoux.Components
                 return _results;
             }
 
+
             public static explicit operator Condition (Func<bool> a_func)
             {
                 return new Condition(a_func);
             }
             
+
             public static explicit operator Condition (Func<bool>[] a_funcs)
             {
                 Func<bool> _newConditionDelegate = default;
