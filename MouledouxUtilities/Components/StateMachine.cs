@@ -47,12 +47,6 @@ namespace Mouledoux.Components
         }
 
 
-
-        public StateMachine()
-        {
-            Initialize(default, true);
-        }
-
         public StateMachine(State a_initState, bool a_enableAnyState = true)
         {
             Initialize(a_initState, a_enableAnyState);
