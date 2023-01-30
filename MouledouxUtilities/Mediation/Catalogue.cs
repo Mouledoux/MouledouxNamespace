@@ -152,11 +152,12 @@ namespace Mouledoux.Mediation
                         int _badSubCount = _badSubs.Count;
                         _results = _badSubCount > 0;
 
-                        while(_badSubCount > 0)
-                        {
-                            _badSubCount -= 1;
-                            _subs[i].Callback -= _badSubs[_badSubCount];
+                        for(int j = _badSubCount; j > 0; j--)
+                        { 
+                            _subs[i].Callback -= _badSubs[j];
                         }
+
+                        _badSubs.Clear();
                     }
                     
                     catch (NullReferenceException)
@@ -242,19 +243,19 @@ namespace Mouledoux.Mediation
 
             if(a_sub != null)
             {
-                TKey message = a_sub.SubKey;
+                TKey _message = a_sub.SubKey;
 
-                if (m_subscriptions.TryGetValue(message, out List<Subscription> tSub))
+                if (m_subscriptions.TryGetValue(_message, out List<Subscription> _tSub))
                 {
-                    tSub.Remove(a_sub);
+                    _tSub.Remove(a_sub);
 
-                    if (tSub.Count == 0)
+                    if (_tSub.Count == 0)
                     {
-                        RemoveSubscriptionMessage(message);
+                        RemoveSubscriptionMessage(_message);
                     }
                     else
                     {
-                        m_subscriptions[message] = tSub;
+                        m_subscriptions[_message] = _tSub;
                     }
 
                     _results = true;
@@ -271,7 +272,7 @@ namespace Mouledoux.Mediation
         {
             int? _results = m_subscriptions[a_subKey]?.Count;
 
-            return (int)(_results == default ? 0 : _results);
+            return (int)(_results == null ? 0 : _results);
         }
 
 
@@ -322,11 +323,16 @@ namespace Mouledoux.Mediation
 
 
 
-            public Subscription(TKey a_subKey, Action<TArg> a_callback, int a_priority = 0)
+            public Subscription(TKey a_subKey, Action<TArg> a_callback, int a_priority = 0, bool a_autoSub = false, bool a_acceptStaleMessages = false)
             {
                 SubKey = a_subKey;
                 Priority = a_priority;
                 Callback = a_callback;
+
+                if(a_autoSub)
+                {
+                    Subscribe(a_acceptStaleMessages);
+                }
             }
 
 
