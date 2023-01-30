@@ -59,10 +59,14 @@ namespace Mouledoux.Node
             List<Node> neighborhood = new List<Node>();
 
             foreach (Node n in n1)
+            {
                 neighborhood.Add(n);
+            }
 
             foreach (Node n in n2)
+            {
                 neighborhood.Remove(n);
+            }
             
             return neighborhood.ToArray();
         }
@@ -70,16 +74,24 @@ namespace Mouledoux.Node
         // ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ----------
         public int AddNeighbor(Node a_newNeighbor)
         {
-            if(a_newNeighbor == null)
+            if (a_newNeighbor == null)
+            {
                 return -1;
-            else if(a_newNeighbor == this)
+            }
+            else if (a_newNeighbor == this)
+            {
                 return -2;
+            }
 
-            if(!m_neighbors.Contains(a_newNeighbor))
+            if (!m_neighbors.Contains(a_newNeighbor))
+            {
                 m_neighbors.Add(a_newNeighbor);
+            }
 
-            if(!a_newNeighbor.m_neighbors.Contains(this))
+            if (!a_newNeighbor.m_neighbors.Contains(this))
+            {
                 a_newNeighbor.AddNeighbor(this);
+            }
 
             return 0;
         }
@@ -93,8 +105,11 @@ namespace Mouledoux.Node
         // ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ----------
         public int RemoveNeighbor(Node a_oldNeighbor)
         {
-            m_neighbors.Remove(a_oldNeighbor);
-            a_oldNeighbor.RemoveNeighbor(this);
+            if (CheckIsNeighbor(a_oldNeighbor))
+            {
+                m_neighbors.Remove(a_oldNeighbor);
+                a_oldNeighbor.RemoveNeighbor(this);
+            }
 
             return 0;
         }
@@ -102,8 +117,10 @@ namespace Mouledoux.Node
         // ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ----------
         public int ClearNeighbors()
         {
-            foreach(Node n in m_neighbors)
+            foreach (Node n in m_neighbors)
+            {
                 n.RemoveNeighbor(this);
+            }
             
             m_neighbors.Clear();
 
@@ -113,8 +130,14 @@ namespace Mouledoux.Node
         // ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ----------
         public int TradeNeighbors(Node a_neighbor)
         {
-            if(a_neighbor == null) return -1;
-            else if(!m_neighbors.Contains(a_neighbor)) return -2;
+            if (a_neighbor == null)
+            {
+                return -1;
+            }
+            else if (!m_neighbors.Contains(a_neighbor))
+            {
+                return -2;
+            }
 
             Node[] myNeighbors;
 
@@ -128,14 +151,18 @@ namespace Mouledoux.Node
         
 
             ClearNeighbors();                               // Clear this node's neighbors
-            foreach(Node n in a_neighbor.GetNeighbors())    // For each neighbor of my neighbor
+            foreach (Node n in a_neighbor.GetNeighbors())    // For each neighbor of my neighbor
+            {
                 AddNeighbor(n);                                 // Copy it to this node's neighbors
+            }
             AddNeighbor(a_neighbor);                        // Add the neighbor back to this node's neighbors
 
 
             a_neighbor.ClearNeighbors();                    // Clear the neighbor's neighbors
-            foreach(Node n in myNeighbors)                  // For each node in the temp array
+            foreach (Node n in myNeighbors)                  // For each node in the temp array
+            {
                 a_neighbor.AddNeighbor(n);                        // Copy it to the neighbor's new neighbors
+            }
             a_neighbor.AddNeighbor(this);                   // Add this node back to the neighbor's neighbors
 
             return 0;
@@ -153,8 +180,10 @@ namespace Mouledoux.Node
         // ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ----------
         public int RemoveInformation(object a_info)
         {
-            if(m_information.Contains(a_info))
+            if (m_information.Contains(a_info))
+            {
                 m_information.Remove(a_info);
+            }
 
             return 0;
         }
