@@ -64,7 +64,7 @@ namespace Mouledoux.Components
         {
             bool _results = false;
 
-            if(CurrentState.StateIsValid)
+            if(CurrentState != null && CurrentState.StateIsValid)
             {
                 CurrentState.OnStateUpdate();
 
@@ -198,7 +198,7 @@ namespace Mouledoux.Components
             }
 
 
-            public bool StateIsValid => this != null && this != default;
+            public bool StateIsValid => this != default;
 
 
 
@@ -268,7 +268,7 @@ namespace Mouledoux.Components
             }
 
 
-            public bool TransitionIsValid => this != null && this != default;
+            public bool TransitionIsValid => this != default;
 
 
 
