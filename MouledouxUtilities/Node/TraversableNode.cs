@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace Mouledoux.Node
 {
-    class TraversableNode : Node, ITraversable
+    class TraversableNode : Node<TraversableNode>, ITraversable
     {
         protected ITraversable[] m_connectedTraversables;
         public ITraversable[] ConnectedTraversables { get => m_connectedTraversables; }
@@ -36,16 +36,40 @@ namespace Mouledoux.Node
         public bool IsTraversable { get => m_isTraversable; set => m_isTraversable = value; }
 
 
+        public enum EHeuristicType
+        {
+            LINEAR,
+            MANHATTAN,
+        }
+        public EHeuristicType HeuristicType = EHeuristicType.LINEAR;
+
         public int CompareTo(ITraversable other)
         {
-            bool isLess = other.fVal > fVal;
-            bool isSame = other.fVal == fVal;
+            bool isSame = fVal == other.fVal;
+            bool isLess = fVal < other.fVal;
             return isSame ? 0 : isLess ? -1 : 1;
         }
 
         public float GetHeuristicTo(ITraversable destination)
         {
-            return (float)this.GetLinearDistanceTo(destination);
+            float returnHeuristic = 0f;
+
+            switch(HeuristicType)
+            {
+                case EHeuristicType.LINEAR:
+                    returnHeuristic = (float)this.GetLinearDistanceTo(destination);
+                    break;
+                
+                case EHeuristicType.MANHATTAN:
+                    returnHeuristic = (float)this.GetManhattanDistanceTo(destination);
+                    break;
+
+                default:
+                    returnHeuristic = 0f;
+                    break;
+            }
+
+            return returnHeuristic;
         }
 
         public TraversableNode(float[] a_coordinates)
@@ -66,6 +90,11 @@ namespace Mouledoux.Node
             m_gVal = 0;
             m_hVal = 0;
             m_isTraversable = a_isTraversable;
+        }
+
+        protected void SetTraversablesToNeighbors()
+        {
+            m_connectedTraversables = GetNeighbors();
         }
     }
 }

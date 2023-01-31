@@ -3,39 +3,39 @@ using System.Collections.Generic;
 
 namespace Mouledoux.Node
 {
-    public class Node
+    public class Node<NodeType> where NodeType : Node<NodeType>
     {
-        private List<Node> m_neighbors;
+        private List<NodeType> m_neighbors;
         private List<object> m_information;
 
         public Node()
         {
-            m_neighbors = new List<Node>();
+            m_neighbors = new List<NodeType>();
             m_information = new List<object>();
         }
 
         // ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ----------
-        public Node[] GetNeighbors()
+        public NodeType[] GetNeighbors()
         {
-            Node[] myNeighbors = m_neighbors.ToArray();
+            NodeType[] myNeighbors = m_neighbors.ToArray();
             return myNeighbors;
         }
 
         // ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ----------
-        public Node[] GetNeighborhood(uint a_layers = 1)
+        public NodeType[] GetNeighborhood(uint a_layers = 1)
         {   
             int index = 0;
             int neighbors = 0;
 
-            List<Node> neighborhood = new List<Node>();
-            neighborhood.Add(this);
+            List<NodeType> neighborhood = new List<NodeType>();
+            neighborhood.Add(this as NodeType);
 
             for(int i = 0; i < a_layers; i++)
             {
                 neighbors = neighborhood.Count;
                 for(int j = index; j < neighbors; j++)
                 {
-                    foreach(Node n in neighborhood[j].GetNeighbors())
+                    foreach(NodeType n in neighborhood[j].GetNeighbors())
                     {
                         if(!neighborhood.Contains(n))
                         {
@@ -45,25 +45,25 @@ namespace Mouledoux.Node
                     index = j;
                 }
             }
-            neighborhood.Remove(this);
+            neighborhood.Remove(this as NodeType);
             return neighborhood.ToArray();
         }
 
         // ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ----------
-        public Node[] GetNeighborhoodLayers(uint a_innerBand, uint a_bandWidth = 1)
+        public NodeType[] GetNeighborhoodLayers(uint a_innerBand, uint a_bandWidth = 1)
         {
             //innerBand--;
-            Node[] n1 = GetNeighborhood(a_innerBand + a_bandWidth);
-            Node[] n2 = GetNeighborhood(a_innerBand);
+            NodeType[] n1 = GetNeighborhood(a_innerBand + a_bandWidth);
+            NodeType[] n2 = GetNeighborhood(a_innerBand);
 
-            List<Node> neighborhood = new List<Node>();
+            List<NodeType> neighborhood = new List<NodeType>();
 
-            foreach (Node n in n1)
+            foreach (NodeType n in n1)
             {
                 neighborhood.Add(n);
             }
 
-            foreach (Node n in n2)
+            foreach (NodeType n in n2)
             {
                 neighborhood.Remove(n);
             }
@@ -72,7 +72,7 @@ namespace Mouledoux.Node
         }
 
         // ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ----------
-        public int AddNeighbor(Node a_newNeighbor)
+        public int AddNeighbor(NodeType a_newNeighbor)
         {
             if (a_newNeighbor == null)
             {
@@ -88,27 +88,27 @@ namespace Mouledoux.Node
                 m_neighbors.Add(a_newNeighbor);
             }
 
-            if (!a_newNeighbor.m_neighbors.Contains(this))
+            if (!a_newNeighbor.m_neighbors.Contains(this as NodeType))
             {
-                a_newNeighbor.AddNeighbor(this);
+                a_newNeighbor.AddNeighbor(this as NodeType);
             }
 
             return 0;
         }
 
         // ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ----------
-        public bool CheckIsNeighbor(Node a_node)
+        public bool CheckIsNeighbor(NodeType a_node)
         {
             return m_neighbors.Contains(a_node);
         }
 
         // ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ----------
-        public int RemoveNeighbor(Node a_oldNeighbor)
+        public int RemoveNeighbor(NodeType a_oldNeighbor)
         {
             if (CheckIsNeighbor(a_oldNeighbor))
             {
                 m_neighbors.Remove(a_oldNeighbor);
-                a_oldNeighbor.RemoveNeighbor(this);
+                a_oldNeighbor.RemoveNeighbor(this as NodeType);
             }
 
             return 0;
@@ -117,9 +117,9 @@ namespace Mouledoux.Node
         // ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ----------
         public int ClearNeighbors()
         {
-            foreach (Node n in m_neighbors)
+            foreach (NodeType n in m_neighbors)
             {
-                n.RemoveNeighbor(this);
+                n.RemoveNeighbor(this as NodeType);
             }
             
             m_neighbors.Clear();
@@ -128,7 +128,7 @@ namespace Mouledoux.Node
         }
 
         // ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ----------
-        public int TradeNeighbors(Node a_neighbor)
+        public int TradeNeighbors(NodeType a_neighbor)
         {
             if (a_neighbor == null)
             {
@@ -139,7 +139,7 @@ namespace Mouledoux.Node
                 return -2;
             }
 
-            Node[] myNeighbors;
+            NodeType[] myNeighbors;
 
 
             // // Remove eachother as neighbors, so they aren't neighbors to themselves
@@ -151,7 +151,7 @@ namespace Mouledoux.Node
         
 
             ClearNeighbors();                               // Clear this node's neighbors
-            foreach (Node n in a_neighbor.GetNeighbors())    // For each neighbor of my neighbor
+            foreach (NodeType n in a_neighbor.GetNeighbors())    // For each neighbor of my neighbor
             {
                 AddNeighbor(n);                                 // Copy it to this node's neighbors
             }
@@ -159,11 +159,11 @@ namespace Mouledoux.Node
 
 
             a_neighbor.ClearNeighbors();                    // Clear the neighbor's neighbors
-            foreach (Node n in myNeighbors)                  // For each node in the temp array
+            foreach (NodeType n in myNeighbors)                  // For each node in the temp array
             {
                 a_neighbor.AddNeighbor(n);                        // Copy it to the neighbor's new neighbors
             }
-            a_neighbor.AddNeighbor(this);                   // Add this node back to the neighbor's neighbors
+            a_neighbor.AddNeighbor(this as NodeType);                   // Add this node back to the neighbor's neighbors
 
             return 0;
         }
@@ -195,42 +195,42 @@ namespace Mouledoux.Node
         }
 
         // ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ----------
-        public T[] GetInformation<T>()
+        public NodeInfoType[] GetInformation<NodeInfoType>()
         {
-            List<T> returnList = new List<T>();
+            List<NodeInfoType> returnList = new List<NodeInfoType>();
 
             foreach(object info in m_information)
             {
-                if(typeof(T).IsAssignableFrom(info.GetType()))
+                if(typeof(NodeInfoType).IsAssignableFrom(info.GetType()))
                 {
-                    returnList.Add((T)info);
+                    returnList.Add((NodeInfoType)info);
                 }
             }
             return returnList.ToArray();
         }
 
-        public T[] GetNeighborsInformation<T>()
+        public NodeInfoType[] GetNeighborsInformation<NodeInfoType>()
         {
-            return GetMassNodeInformation<T>(GetNeighbors());
+            return GetMassNodeInfoTypermation<NodeInfoType>(GetNeighbors());
         }
 
-        public T[] GetNeighborhoodInformation<T>(uint a_layers = 1)
+        public NodeInfoType[] GetNeighborhoodInformation<NodeInfoType>(uint a_layers = 1)
         {
-            return GetMassNodeInformation<T>(GetNeighborhood(a_layers));
+            return GetMassNodeInfoTypermation<NodeInfoType>(GetNeighborhood(a_layers));
         }
 
-        public T[] GetNeighborhoodLayersInformation<T>(uint a_innerBand, uint a_bandWidth = 1)
+        public NodeInfoType[] GetNeighborhoodLayersInformation<NodeInfoType>(uint a_innerBand, uint a_bandWidth = 1)
         {
-            return GetMassNodeInformation<T>(GetNeighborhoodLayers(a_innerBand, a_bandWidth));
+            return GetMassNodeInfoTypermation<NodeInfoType>(GetNeighborhoodLayers(a_innerBand, a_bandWidth));
         }
 
-        private static T[] GetMassNodeInformation<T>(Node[] nodes)
+        private static NodeInfoType[] GetMassNodeInfoTypermation<NodeInfoType>(NodeType[] nodes)
         {
-            List<T> returnList = new List<T>();
+            List<NodeInfoType> returnList = new List<NodeInfoType>();
 
-            foreach(Node node in nodes)
+            foreach(NodeType node in nodes)
             {
-                foreach(T info in node.GetInformation<T>())
+                foreach(NodeInfoType info in node.GetInformation<NodeInfoType>())
                 {
                     returnList.Add(info);
                 }
