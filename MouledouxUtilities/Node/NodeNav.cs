@@ -5,44 +5,44 @@ using System.Collections.Generic;
 
 namespace Mouledoux.Node
 {
-    public static class NodeNav
+    public static class NodeNav<NodeType> where NodeType : ITraversable<NodeType>, System.IComparable<NodeType>
     {
         // ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ----------
-        public static Stack<T> TwinStarT<T>(ITraversable begNode, ITraversable endNode, bool dualSearch = true) where T : ITraversable
-        {
+        public static Stack<NodeType> TwinStarT(NodeType begNode, NodeType endNode, bool dualSearch = true)
+        { 
             object chainLocker = new object();
-
 
             if(dualSearch)
             {
-                Task backwards = Task.Run(() => SoloStar<T>(endNode, begNode, chainLocker, false, 0f, 1f));
+                Task backwards = Task.Run(() => SoloStar(endNode, begNode, chainLocker, false, 0f, 1f));
             }
 
-            Task<Stack<T>> forward = Task.Run(() => SoloStar<T>(begNode, endNode, chainLocker));
+            Task<Stack<NodeType>> forward = Task.Run(() => SoloStar(begNode, endNode, chainLocker));
 
             return forward.Result;
         }
 
 
 
-        public static Stack<T> SoloStar<T>(ITraversable begNode, ITraversable endNode, object chainLocker, bool canReturn = true, float hMod = 1f, float gMod = 1f) where T : ITraversable
+        // ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ----------
+        public static Stack<NodeType> SoloStar(NodeType begNode, NodeType endNode, object chainLocker, bool canReturn = true, float hMod = 1f, float gMod = 1f)
         {
-            if(begNode == endNode || begNode == null || endNode == null || !endNode.IsTraversable) return null;
+            if(begNode.Equals(endNode) || begNode == null || endNode == null || !endNode.IsTraversable) return null;
 
 
-            List<ITraversable> openList = new List<ITraversable>();
-            List<ITraversable> closedList = new List<ITraversable>();
+            List<NodeType> openList = new List<NodeType>();
+            List<NodeType> closedList = new List<NodeType>();
 
             openList.Add(begNode);
 
-            begNode.TraversableOrigin = null;
-            ITraversable currentNode;
+            begNode.TraversableOrigin = default;
+            NodeType currentNode;
 
             while(openList.Count > 0)
             {
                 currentNode = openList[0];
 
-                foreach (ITraversable neighborNode in currentNode.ConnectedTraversables)
+                foreach (NodeType neighborNode in currentNode.ConnectedTraversables)
                 {
                     if(neighborNode == null || neighborNode.IsTraversable == false)
                     {
@@ -52,7 +52,7 @@ namespace Mouledoux.Node
                     // Locks the chain modifying to prevent overriding
                     lock(chainLocker)
                     {
-                        bool endInChain = neighborNode.CheckOriginChainFor(endNode);
+                        bool endInChain = CheckOriginChainFor(neighborNode, endNode);
 
                         if(endInChain)
                         {
@@ -61,17 +61,17 @@ namespace Mouledoux.Node
                                 return null;
                             }
 
-                            neighborNode.ReverseOriginChain();
+                            ReverseOriginChain(neighborNode);
                             neighborNode.TraversableOrigin = currentNode;
-                            Stack<T> returnStack = GetTraversableStackPathTo<T>(endNode);
+                            Stack<NodeType> returnStack = GetTraversableStackPathTo(endNode);
                             
-                            foreach(ITraversable tn in closedList)
+                            foreach(NodeType tn in closedList)
                             {
-                                tn.ClearOriginChain();
+                                ClearOriginChain(tn);
                             }
-                            foreach(ITraversable tn in openList)
+                            foreach(NodeType tn in openList)
                             {
-                                tn.ClearOriginChain();
+                                ClearOriginChain(tn);
                             }
 
                             return returnStack;
@@ -84,15 +84,15 @@ namespace Mouledoux.Node
                                 if(!openList.Contains(neighborNode))
                                 {
                                     neighborNode.TraversableOrigin = currentNode;
-                                    neighborNode.gVal = neighborNode.GetTravelCostToRootOrigin() * gMod;
+                                    neighborNode.gVal = GetTravelCostToRootOrigin(neighborNode) * gMod;
                                     neighborNode.hVal = neighborNode.GetHeuristicTo(endNode) * hMod;
 
-                                    openList.AddToSortedList(neighborNode);
+                                    AddToSortedList(ref openList, neighborNode);
                                 }
                             }
 
                             // We have already been to this node, so see if it's cheaper to the current node from here
-                            else if(neighborNode.TraversableOrigin != currentNode && neighborNode.CompareTo(currentNode) < 0)
+                            else if(neighborNode.TraversableOrigin.Equals(currentNode) == false && neighborNode.CompareTo(currentNode) < 0)
                             {
                                 currentNode.TraversableOrigin = neighborNode;
                             }                            
@@ -110,25 +110,19 @@ namespace Mouledoux.Node
 
 
         // ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ----------
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <typeparam name="T"></typeparam>
-        /// <param name="endNode"></param>
-        /// <returns>A stack of ITraversable in order from origin at the top, to the provided endNode at the bottom</returns>
-        private static Stack<T> GetTraversableStackPathTo<T>(ITraversable endNode) where T : ITraversable
+        private static Stack<NodeType> GetTraversableStackPathTo(NodeType endNode)
         {
-            Stack<T> returnStack = new Stack<T>();
-            T currentNode = (T)endNode;
+            Stack<NodeType> returnStack = new Stack<NodeType>();
+            NodeType currentNode = endNode;
 
-            currentNode.ValidateOriginChain();
+            ValidateOriginChain(currentNode);
 
             while(currentNode != null && !currentNode.TraversableOrigin.Equals(currentNode))
             {
                 try
                 {
                     returnStack.Push(currentNode);
-                    currentNode = (T)currentNode.TraversableOrigin;
+                    currentNode = currentNode.TraversableOrigin;
                 }
                 catch(System.OutOfMemoryException)
                 {
@@ -143,7 +137,7 @@ namespace Mouledoux.Node
 
 
         // ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ----------
-        private static int AddToSortedList<T>(this List<T> thisSortedList, T listElement) where T : System.IComparable<T>
+        private static int AddToSortedList<ListType>(ref List<ListType> thisSortedList, ListType listElement) where ListType : System.IComparable<ListType>
         {
             for(int i = 0; i < thisSortedList.Count; i++)
             {
@@ -163,29 +157,29 @@ namespace Mouledoux.Node
 
 
         // ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ----------
-        public static T GetRootOrigin<T>(this T thisNode) where T : ITraversable
+        public static NodeType GetRootOrigin(NodeType thisNode)
         {
-            return thisNode.TraversableOrigin == null ? thisNode : (T)(thisNode.TraversableOrigin.GetRootOrigin());
+            return thisNode.TraversableOrigin == null ? thisNode : GetRootOrigin(thisNode.TraversableOrigin);
         }
 
 
 
 
         // ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ----------
-        public static void ClearOriginChain(this ITraversable thisEndNode)
+        public static void ClearOriginChain(NodeType thisEndNode)
         {
-            foreach(ITraversable tn in thisEndNode.ConnectedTraversables)
+            foreach(NodeType tn in thisEndNode.ConnectedTraversables)
             {
-                if (tn.TraversableOrigin == thisEndNode)
+                if (tn.TraversableOrigin.Equals(thisEndNode))
                 {
-                    tn.ClearOriginChain();
+                    ClearOriginChain(tn);
                 }
             }
 
             if (thisEndNode.TraversableOrigin != null)
             {
-                thisEndNode.TraversableOrigin.ClearOriginChain();
-                thisEndNode.TraversableOrigin = null;
+                ClearOriginChain(thisEndNode.TraversableOrigin);
+                thisEndNode.TraversableOrigin = default;
             }
         }
 
@@ -193,11 +187,11 @@ namespace Mouledoux.Node
 
 
         // ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ----------
-        public static void ReverseOriginChain(this ITraversable thisEndNode)
+        public static void ReverseOriginChain(NodeType thisEndNode)
         {
-            ITraversable currentNode = thisEndNode;
-            ITraversable previousNode = null;
-            ITraversable nextNode = null;
+            NodeType currentNode = thisEndNode;
+            NodeType previousNode = default;
+            NodeType nextNode = default;
 
             do
             {
@@ -206,23 +200,23 @@ namespace Mouledoux.Node
                 previousNode = currentNode;
                 currentNode = nextNode;
 
-            } while (currentNode != null);
+            } while (currentNode.Equals(null) == false && currentNode.Equals(default) == false);
         }
 
 
 
 
         // ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ----------
-        public static void ValidateOriginChain(this ITraversable thisEndNode)
+        public static void ValidateOriginChain(NodeType thisEndNode)
         {
-            ITraversable iterator = thisEndNode;
-            List<ITraversable> originChain = new List<ITraversable>();
+            NodeType iterator = thisEndNode;
+            List<NodeType> originChain = new List<NodeType>();
 
-            while (iterator.TraversableOrigin != iterator)
+            while (iterator.TraversableOrigin.Equals(iterator) == false)
             {
                 if (originChain.Contains(iterator.TraversableOrigin))
                 {
-                    iterator.TraversableOrigin = null;
+                    iterator.TraversableOrigin = default;
                 }
                 else
                 {
@@ -238,14 +232,14 @@ namespace Mouledoux.Node
 
 
         // ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ----------
-        public static bool CheckOriginChainFor(this ITraversable thisNode, ITraversable targetNode)
+        public static bool CheckOriginChainFor(NodeType thisNode, NodeType targetNode)
         {
-            ITraversable nextNode = thisNode;
-            thisNode.ValidateOriginChain();
+            NodeType nextNode = thisNode;
+            ValidateOriginChain(thisNode);
 
             do
             {
-                if (nextNode == targetNode)
+                if (nextNode.Equals(targetNode))
                 {
                     return true;
                 }
@@ -264,10 +258,10 @@ namespace Mouledoux.Node
 
 
         // ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ----------
-        public static float GetTravelCostToRootOrigin(this ITraversable traversableNode)
+        public static float GetTravelCostToRootOrigin(NodeType traversableNode)
         {
             return (traversableNode.TraversableOrigin != null)
-                ? (traversableNode.fVal + traversableNode.TraversableOrigin.GetTravelCostToRootOrigin())
+                ? (traversableNode.fVal + GetTravelCostToRootOrigin(traversableNode.TraversableOrigin))
                 : 0;
         }
 
@@ -275,7 +269,7 @@ namespace Mouledoux.Node
 
 
         // ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ----------
-        public static double GetLinearDistanceTo(this ITraversable origin, ITraversable destination)
+        public static double GetLinearDistanceTo(NodeType origin, NodeType destination)
         {
             double distance = 0;
             int minCoord =
@@ -294,7 +288,7 @@ namespace Mouledoux.Node
         
         
         // ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ----------
-        public static double GetManhattanDistanceTo(this ITraversable origin, ITraversable destination)
+        public static double GetManhattanDistanceTo(NodeType origin, NodeType destination)
         {
             double distance = 0;
             int minCoord =
@@ -314,11 +308,11 @@ namespace Mouledoux.Node
 
 
 
-    public interface ITraversable : System.IComparable<ITraversable>
+    public interface ITraversable<TraversableType> : System.IComparable<ITraversable<TraversableType>>
     {
-        ITraversable[] ConnectedTraversables { get; }
+        TraversableType[] ConnectedTraversables { get; }
 
-        ITraversable TraversableOrigin {get; set;}
+        TraversableType TraversableOrigin {get; set;}
 
         float[] Coordinates {get; set;}
 
@@ -340,6 +334,6 @@ namespace Mouledoux.Node
         bool IsTraversable {get; set;}
 
 
-        float GetHeuristicTo(ITraversable destination);
+        float GetHeuristicTo(ITraversable<TraversableType> destination);
     }
 }

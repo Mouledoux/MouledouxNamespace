@@ -6,14 +6,14 @@ using System.Threading.Tasks;
 
 namespace Mouledoux.Node
 {
-    class TraversableNode : Node<TraversableNode>, ITraversable
+    class TraversableNode : Node<TraversableNode>, ITraversable<TraversableNode>
     {
-        protected ITraversable[] m_connectedTraversables;
-        public ITraversable[] ConnectedTraversables { get => m_connectedTraversables; }
+        protected TraversableNode[] m_connectedTraversables;
+        public TraversableNode[] ConnectedTraversables { get => m_connectedTraversables; }
 
 
-        protected ITraversable m_traversableOrigin;
-        public ITraversable TraversableOrigin { get => m_traversableOrigin; set => m_traversableOrigin = value; }
+        protected TraversableNode m_traversableOrigin;
+        public TraversableNode TraversableOrigin { get => m_traversableOrigin; set => m_traversableOrigin = value; }
 
 
         protected float[] m_coordinates;
@@ -31,7 +31,7 @@ namespace Mouledoux.Node
         protected float m_hVal;
         public float hVal { get => m_hVal; set => m_hVal = value; }
 
-        
+
         protected bool m_isTraversable;
         public bool IsTraversable { get => m_isTraversable; set => m_isTraversable = value; }
 
@@ -43,25 +43,18 @@ namespace Mouledoux.Node
         }
         public EHeuristicType HeuristicType = EHeuristicType.LINEAR;
 
-        public int CompareTo(ITraversable other)
-        {
-            bool isSame = fVal == other.fVal;
-            bool isLess = fVal < other.fVal;
-            return isSame ? 0 : isLess ? -1 : 1;
-        }
-
-        public float GetHeuristicTo(ITraversable destination)
+        public float GetHeuristicTo(ITraversable<TraversableNode> destination)
         {
             float returnHeuristic = 0f;
 
             switch(HeuristicType)
             {
                 case EHeuristicType.LINEAR:
-                    returnHeuristic = (float)this.GetLinearDistanceTo(destination);
+                    returnHeuristic = (float)NodeNav<TraversableNode>.GetLinearDistanceTo(this, (TraversableNode)destination);
                     break;
-                
+
                 case EHeuristicType.MANHATTAN:
-                    returnHeuristic = (float)this.GetManhattanDistanceTo(destination);
+                    returnHeuristic = (float)NodeNav<TraversableNode>.GetManhattanDistanceTo(this, (TraversableNode)destination);
                     break;
 
                 default:
@@ -72,9 +65,16 @@ namespace Mouledoux.Node
             return returnHeuristic;
         }
 
+        public int CompareTo(ITraversable<TraversableNode> other)
+        {
+            bool isSame = fVal == other.fVal;
+            bool isLess = fVal < other.fVal;
+            return isSame ? 0 : isLess ? -1 : 1;
+        }
+
         public TraversableNode(float[] a_coordinates)
         {
-            m_connectedTraversables = new ITraversable[0];
+            m_connectedTraversables = new TraversableNode[0];
             m_coordinates = a_coordinates;
             m_fVal = 0;
             m_gVal = 0;
@@ -82,7 +82,7 @@ namespace Mouledoux.Node
             m_isTraversable = true;
         }
 
-        public TraversableNode(ITraversable[] a_connectedTraversables, float[] a_coordinates, float a_fVal = 0, bool a_isTraversable = true)
+        public TraversableNode(TraversableNode[] a_connectedTraversables, float[] a_coordinates, float a_fVal = 0, bool a_isTraversable = true)
         {
             m_connectedTraversables = a_connectedTraversables;
             m_coordinates = a_coordinates;
@@ -97,4 +97,5 @@ namespace Mouledoux.Node
             m_connectedTraversables = GetNeighbors();
         }
     }
+
 }

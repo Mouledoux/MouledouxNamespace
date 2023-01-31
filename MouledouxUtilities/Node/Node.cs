@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 namespace Mouledoux.Node
 {
-    public class Node<NodeType> where NodeType : Node<NodeType>
+    public abstract class Node<NodeType> where NodeType : Node<NodeType>
     {
         private List<NodeType> m_neighbors;
         private List<object> m_information;
