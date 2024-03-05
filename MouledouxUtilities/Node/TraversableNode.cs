@@ -9,62 +9,59 @@ namespace Mouledoux.Node
     class TraversableNode : Node<TraversableNode>, ITraversable<TraversableNode>
     {
         protected TraversableNode[] m_connectedTraversables;
-        public TraversableNode[] ConnectedTraversables { get => m_connectedTraversables; }
+        public TraversableNode[] ConnectedTraversables
+        {
+            get => m_connectedTraversables;
+        }
 
 
         protected TraversableNode m_traversableOrigin;
-        public TraversableNode TraversableOrigin { get => m_traversableOrigin; set => m_traversableOrigin = value; }
+        public TraversableNode TraversableOrigin
+        {
+            get => m_traversableOrigin;
+            private set => m_traversableOrigin = value;
+        }
 
 
         protected float[] m_coordinates;
-        public float[] Coordinates { get => m_coordinates; set => m_coordinates = value; }
+        public float[] Coordinates
+        { 
+            get => m_coordinates; 
+            private set => m_coordinates = value;
+        }
 
 
         protected float m_fVal;
-        public float fVal { get => m_fVal + gVal + hVal; }
+        public float fVal
+        {
+            get => m_fVal + gVal + hVal;
+        }
 
 
         protected float m_gVal;
-        public float gVal { get => m_gVal; set => m_gVal = value; }
+        public float gVal
+        {
+            get => m_gVal;
+            private set => m_gVal = value;
+        }
 
 
         protected float m_hVal;
-        public float hVal { get => m_hVal; set => m_hVal = value; }
+        public float hVal
+        {
+            get => m_hVal;
+            private set => m_hVal = value;
+        }
 
 
         protected bool m_isTraversable;
-        public bool IsTraversable { get => m_isTraversable; set => m_isTraversable = value; }
-
-
-        public enum EHeuristicType
+        public bool IsTraversable
         {
-            LINEAR,
-            MANHATTAN,
-        }
-        public EHeuristicType HeuristicType = EHeuristicType.LINEAR;
-
-        public float GetHeuristicTo(ITraversable<TraversableNode> destination)
-        {
-            float returnHeuristic = 0f;
-
-            switch(HeuristicType)
-            {
-                case EHeuristicType.LINEAR:
-                    returnHeuristic = (float)NodeNav<TraversableNode>.GetLinearDistanceTo(this, (TraversableNode)destination);
-                    break;
-
-                case EHeuristicType.MANHATTAN:
-                    returnHeuristic = (float)NodeNav<TraversableNode>.GetManhattanDistanceTo(this, (TraversableNode)destination);
-                    break;
-
-                default:
-                    returnHeuristic = 0f;
-                    break;
-            }
-
-            return returnHeuristic;
+            get => m_isTraversable;
+            private set => m_isTraversable = value;
         }
 
+        
         public int CompareTo(ITraversable<TraversableNode> other)
         {
             bool isSame = fVal == other.fVal;
@@ -97,5 +94,4 @@ namespace Mouledoux.Node
             m_connectedTraversables = GetNeighbors();
         }
     }
-
 }

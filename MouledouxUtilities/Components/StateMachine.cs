@@ -3,357 +3,434 @@ using System.Linq;
 
 namespace Mouledoux.Components
 {
-    public sealed class StateMachine
+public sealed class StateMachine
     {
-        private State currentState;
-        public State CurrentState
+        private State _currentState;
+        public State CurrentState { get; private set; }
+
+        private State _anyState;
+        public State AnyState { get; private set; }
+
+        private bool _anyStateEnabled = true;
+        public bool AnyStateEnabled { get; private set; }
+
+        private Transition _nextPotentialTransition;
+
+        public StateMachine(State initialState, bool enableAnyState = true)
         {
-            get
-            {
-                return currentState;
-            }
-            private set
-            {
-                currentState = value;
-            }
+            Initialize(initialState, enableAnyState);
         }
 
-
-        private State anyState;
-        public State AnyState
+        public void Initialize(State initialState, bool enableAnyState = true)
         {
-            get
-            {
-                return anyState;
-            }
-            private set
-            {
-                anyState = value;
-            }
+            CurrentState = initialState;
+            AnyStateEnabled = enableAnyState;
+            _anyState = new State();
         }
 
-
-        private bool anyStateEnabled = true;
-        public bool AnyStateEnabled
+        public bool Update()
         {
-            get
+            _nextPotentialTransition = null;
+            bool isFromAnyState = false;
+            bool results = false;
+
+            if (CurrentState != null && CurrentState.StateIsValid)
             {
-                return anyStateEnabled;
-            }
-            private set
-            {
-                anyStateEnabled = value;
-            }
-        }
-
-
-        public StateMachine(State a_initState, bool a_enableAnyState = true)
-        {
-            Initialize(a_initState, a_enableAnyState);
-        }
-
-        public void Initialize(State a_initState, bool a_enableAnyState = true)
-        {
-            CurrentState = a_initState;
-            AnyStateEnabled = a_enableAnyState;
-            anyState = default;
-        }
-
-
-        public bool Update(bool a_autoInvokeConditions = false)
-        {
-            bool _results = false;
-
-            if(CurrentState != null && CurrentState.StateIsValid)
-            {
-                CurrentState.OnStateUpdate();
-
-                Transition _nextTransition = default;
-                bool _isFromAnyState = false;
+                CurrentState.TryInvokeOnUpdate();
 
                 if (AnyStateEnabled)
                 {
-                    _isFromAnyState = true;
-                    _nextTransition = GetNextValidOrAnyTransition(CurrentState, a_autoInvokeConditions);
+                    AnyState.TryInvokeOnUpdate();
+                    _nextPotentialTransition = GetNextValidOrAnyTransition(CurrentState);
+                    isFromAnyState = _nextPotentialTransition != default;
                 }
                 else
                 {
-                    CurrentState.GetNextValidTransition(a_autoInvokeConditions);
+                    _nextPotentialTransition = CurrentState.GetNextValidTransition();
                 }
 
-                _results = PerformTransition(_nextTransition, _isFromAnyState);
+                results = TryPerformTransition(_nextPotentialTransition, isFromAnyState);
             }
 
-            return _results;
+            return results;
         }
 
-
-        private bool PerformTransition(Transition a_transition, bool a_isFromAnyState = false)
+        private bool TryPerformTransition(Transition transition, bool isFromAnyState = false)
         {
-            bool _validTransition = a_transition.TransitionIsValid;
-            bool _isToAnyState = a_transition.TargetState == AnyState;    // transitions to the anyState are not valid/supported
-            bool _results = _validTransition && !_isToAnyState;
-
-            if (_results)
+            if (transition == null || transition == default)
             {
-                CurrentState.OnStateExit?.Invoke();
-                CurrentState = a_transition.TargetState;
-                CurrentState.OnStateEnter?.Invoke();
+                return false;
             }
 
-            if(a_isFromAnyState && AnyStateEnabled)
+            bool validTransition = transition.EvaluateConditions();
+            bool isToAnyState = transition.TargetState == AnyState;
+
+            bool results = validTransition && !isToAnyState;
+
+            if (results)
             {
-                AnyState?.OnStateEnter?.Invoke();
-                AnyState?.OnStateUpdate?.Invoke();
-                AnyState?.OnStateExit?.Invoke();
+                CurrentState.TryInvokeOnExit();
+                CurrentState = transition.TargetState;
+                CurrentState.TryInvokeOnEnter();
+
+                if (AnyStateEnabled)
+                {
+                    AnyState.TryInvokeOnExit();
+                    AnyState.TryInvokeOnEnter();
+                }
             }
 
-            return _results;
+            return results;
         }
 
-
-        private Transition GetNextValidOrAnyTransition(State a_state, bool a_autoInvokeConditions)
+        private Transition GetNextValidOrAnyTransition(State state)
         {
-            Transition _nextTransition = a_state.GetNextValidTransition(a_autoInvokeConditions);
+            Transition nextTransition = state.GetNextValidTransition();
 
-            _nextTransition = _nextTransition.TransitionIsValid
-                ? _nextTransition
-                : GetAnyStateTransition(a_autoInvokeConditions);
+            if (nextTransition != null || nextTransition != default)
+                return nextTransition.EvaluateConditions() ? nextTransition : GetAnyStateTransition();
 
-            return _nextTransition;
+            return nextTransition;
         }
 
-
-        private Transition GetAnyStateTransition(bool a_autoInvokeConditions = false)
+        private Transition GetAnyStateTransition()
         {
-            if (AnyStateEnabled == false)
+            if (!AnyStateEnabled)
             {
                 return default;
             }
 
-            Transition _targetTransition = AnyState.GetNextValidTransition(a_autoInvokeConditions);
+            return AnyState.GetNextValidTransition();
+        }
 
-            return _targetTransition;
+        private void ClearMachine()
+        {
+            CurrentState = null;
+            AnyState = null;
+            _nextPotentialTransition = null;
         }
         // end StateMachine Class // ---------- ---------- ---------- 
 
 
 
 
-        public sealed class State
+        public sealed class State : IDisposable
         {
-            private Action onStateEnter;
-            public Action OnStateEnter
-            {
-                get
-                {
-                    return onStateEnter;
-                }
-                set
-                {
-                    onStateEnter = value;
-                }
-            }
+            private List<WeakReference<Transition>> _transitionReferences;
 
-
-            private Action onStateUpdate;
-            public Action OnStateUpdate
-            {
-                get
-                {
-                    return onStateUpdate;
-                }
-                set
-                {
-                    onStateUpdate = value;
-                }
-            }
-
-
-            private Action onStateExit;
-            public Action OnStateExit
-            {
-                get
-                {
-                    return onStateExit;
-                }
-                set
-                {
-                    onStateExit = value;
-                }
-            }
-
-
-            private Transition[] availableTransitions;
-            public Transition[] AvailableTransitions
-            {
-                get
-                {
-                    return availableTransitions;
-                }
-                set
-                {
-                    availableTransitions = value;
-                }
-            }
-
+            private WeakReference<Action> OnEnterActionReference;
+            private WeakReference<Action> OnUpdateActionReference;
+            private WeakReference<Action> OnExitActionReference;
 
             public bool StateIsValid => this != default;
 
-
-
-
             public State()
             {
-                OnStateEnter = default;
-                OnStateUpdate = default;
-                OnStateExit = default;
+                _transitionReferences = new List<WeakReference<Transition>>();
             }
 
-
-            public State(Action a_onEnter, Action a_onUpdate, Action a_onExit)
+            public void SetTransitions(Transition[] transitions)
             {
-                OnStateEnter = a_onEnter;
-                OnStateUpdate = a_onUpdate;
-                OnStateExit = a_onExit;
-            }
-
-
-            public Transition GetNextValidTransition(bool a_invokeConditions = false)
-            {
-                Transition _results = default;
-
-                foreach(Transition _potentialTransition in AvailableTransitions)
+                _transitionReferences.Clear();
+                foreach (var transition in transitions)
                 {
-                    if(_potentialTransition.CheckConditionResults(a_invokeConditions))
+                    _transitionReferences.Add(new WeakReference<Transition>(transition));
+                }
+            }
+
+            public void AddTransition(Transition transition)
+            {
+                if (transition != null)
+                {
+                    _transitionReferences.Add(new WeakReference<Transition>(transition));
+                }
+            }
+
+            public void RemoveTransition(Transition transition)
+            {
+                if (transition != null)
+                {
+                    var weakRef = _transitionReferences.FirstOrDefault(t => t.TryGetTarget(out var target) && target == transition);
+                    if (weakRef != null && weakRef != default)
                     {
-                        _results = _potentialTransition;
-                        break;
+                        _transitionReferences.Remove(weakRef);
                     }
                 }
+            }
 
-                return _results;
+            public void AddOnEnterListener(Action action)
+            {
+                if(action == null)
+                {
+                    return;
+                }
+
+                Action onEnterAction;
+
+                if(OnEnterActionReference == null)
+                {
+                    OnEnterActionReference = new WeakReference<Action>(action);
+                }
+
+                else if (OnEnterActionReference.TryGetTarget(out onEnterAction))
+                {
+                    onEnterAction += action;
+                    OnEnterActionReference.SetTarget(onEnterAction);
+                }
+            }
+
+            public void AddOnUpdateListener(Action action)
+            {
+                if (action == null)
+                {
+                    return;
+                }
+
+                Action onUpdateAction;
+
+                if (OnUpdateActionReference == null)
+                {
+                    OnUpdateActionReference = new WeakReference<Action>(action);
+                }
+
+                else if (OnUpdateActionReference.TryGetTarget(out onUpdateAction))
+                {
+                    onUpdateAction += action;
+                    OnUpdateActionReference.SetTarget(onUpdateAction);
+                }
+            }
+
+            public void AddOnExitListener(Action action)
+            {
+                if (action == null)
+                {
+                    return;
+                }
+
+                Action onExitAction;
+
+                if (OnExitActionReference == null)
+                {
+                    OnExitActionReference = new WeakReference<Action>(action);
+                }
+
+                else if (OnExitActionReference.TryGetTarget(out onExitAction))
+                {
+                    onExitAction += action;
+                    OnExitActionReference.SetTarget(onExitAction);
+                }
+            }
+
+            public void TryInvokeOnEnter()
+            {
+                if(OnEnterActionReference == null)
+                {
+                    return;
+                }
+
+                Action onEnterAction;
+                if (OnEnterActionReference.TryGetTarget(out onEnterAction))
+                {
+                    onEnterAction?.Invoke();
+                }
+            }
+
+            public void TryInvokeOnUpdate()
+            {
+                if (OnUpdateActionReference == null)
+                {
+                    return;
+                }
+
+                Action onUpdateAction;
+                if (OnUpdateActionReference.TryGetTarget(out onUpdateAction))
+                {
+                    onUpdateAction?.Invoke();
+                }
+            }
+
+            public void TryInvokeOnExit()
+            {
+                if (OnExitActionReference == null)
+                {
+                    return;
+                }
+
+                Action onExitAction;
+                if (OnExitActionReference.TryGetTarget(out onExitAction))
+                {
+                    onExitAction?.Invoke();
+                }
+            }
+            public Transition GetNextValidTransition()
+            {
+                foreach (var weakRef in _transitionReferences)
+                {
+                    if (weakRef.TryGetTarget(out var transition) && transition.EvaluateConditions())
+                    {
+                        return transition;
+                    }
+                }
+                return null;
+            }
+
+            public void ClearState()
+            {
+                OnEnterActionReference = null;
+                OnUpdateActionReference = null;
+                OnExitActionReference = null;
+                _transitionReferences.Clear();
+            }
+
+            public void Dispose()
+            {
+                ClearState();
             }
         }
         // end State class // ---------- ---------- ---------- 
 
 
-        public sealed class Transition
+        public sealed class Transition : IDisposable
         {
-            private State targetState;
+            private WeakReference<State> _targetStateReference;
+            private List<WeakReference<Condition>> _transitionConditionReferences;
+
             public State TargetState
             {
                 get
                 {
+                    State targetState;
+                    _targetStateReference.TryGetTarget(out targetState);
                     return targetState;
                 }
-                private set
-                {
-                    targetState = value;
-                }
+            }
+            public bool TryGetTargetState(out State targetState)
+            {
+               return _targetStateReference.TryGetTarget(out targetState);
             }
 
+            public Transition(State targetState, Condition[] conditions)
+            {
+                if (targetState == null)
+                {
+                    throw new ArgumentNullException(nameof(targetState));
+                }
 
-            private Condition[] transitionConditions;
-            public Condition[] TransitionConditions
+                if (conditions == null || conditions.Length == 0)
+                {
+                    throw new ArgumentException("At least one condition must be provided.", nameof(conditions));
+                }
+
+                _targetStateReference = new WeakReference<State>(targetState);
+                _transitionConditionReferences = conditions.Select(c => new WeakReference<Condition>(c)).ToList();
+            }
+
+            public bool EvaluateConditions()
+            {
+                foreach (var conditionRef in _transitionConditionReferences)
+                {
+                    Condition condition;
+                    if (conditionRef.TryGetTarget(out condition))
+                    {
+                        if (!condition.Evaluate())
+                        {
+                            return false;
+                        }
+                    }
+                    else
+                    {
+                        // a referenced condition object has been deleted
+                        return false;
+                    }
+                }
+                return true; // All conditions passed
+            }
+
+            public IReadOnlyList<Condition> TransitionConditions
             {
                 get
                 {
-                    return transitionConditions;
+                    List<Condition> conditions = new List<Condition>();
+                    foreach (var conditionRef in _transitionConditionReferences)
+                    {
+                        Condition condition;
+                        if (conditionRef.TryGetTarget(out condition))
+                        {
+                            conditions.Add(condition);
+                        }
+                    }
+                    return conditions;
                 }
-                private set
-                {
-                    transitionConditions = value;
-                }
             }
 
-
-            public bool TransitionIsValid => this != default;
-
-
-
-            public Transition(State a_targetState, Condition[] a_conditions)
+            public void Dispose()
             {
-                TargetState = a_targetState;
-                TransitionConditions = a_conditions;
+                _targetStateReference = null;
+                _transitionConditionReferences.Clear();
             }
 
-
-            public bool CheckConditionResults(bool a_invokeConditions = false)
-            {
-                bool _results = a_invokeConditions
-                    ? TransitionConditions.All(_cond => _cond.InvokeCheckConditionResults())
-                    : TransitionConditions.All(_cond => _cond.LastCheckedResult);
-
-                return _results;
-            }
         }
         // end Transition class ---------- ---------- ---------- 
 
 
-
-        public sealed class Condition
+        public sealed class Condition : IDisposable
         {
-            private bool lastCheckedResult;
-            public bool LastCheckedResult
+            private WeakReference<Func<bool>> _conditionDelegateReference;
+
+            public Condition(Func<bool> condition)
             {
-                get
+                if (condition == null)
                 {
-                    return lastCheckedResult;
-                }
-                private set
-                {
-                    lastCheckedResult = value;
-                }
-            }
-
-
-            private Func<bool> conditionDelegate = default;
-
-
-
-            public Condition(Func<bool> a_condition)
-            {
-                conditionDelegate = a_condition == null ? default : a_condition;
-            }
-
-
-            public bool InvokeCheckConditionResults()
-            {
-                bool _results  =
-                conditionDelegate.GetInvocationList().All(a_condition =>
-                {
-                    return a_condition is Func<bool> _fb && _fb.Invoke();
-                });
-
-                LastCheckedResult = _results;
-
-                return _results;
-            }
-
-
-            public static explicit operator Condition (Func<bool> a_func)
-            {
-                return new Condition(a_func);
-            }
-            
-
-            public static explicit operator Condition (Func<bool>[] a_funcs)
-            {
-                Func<bool> _newConditionDelegate = default;
-                Condition _newCondition = new Condition(_newConditionDelegate);
-
-                foreach(Func<bool> _fb in a_funcs)
-                {
-                    _newConditionDelegate += _fb;
+                    throw new ArgumentNullException(nameof(condition));
                 }
 
-                return _newCondition;
+                _conditionDelegateReference = new WeakReference<Func<bool>>(condition);
             }
+
+            public bool Evaluate()
+            {
+                Func<bool> conditionDelegate;
+                if (_conditionDelegateReference.TryGetTarget(out conditionDelegate))
+                {
+                    return conditionDelegate.Invoke();
+                }
+                else
+                {
+                    return false;
+                }
+            }
+
+			private void ClearCondition()
+			{
+				_conditionDelegateReference = null;
+			}
+
+            public static explicit operator Condition(Func<bool> conditionDelegate)
+            {
+                return new Condition(conditionDelegate);
+            }
+
+            public static explicit operator Func<bool>(Condition condition)
+            {
+                Func<bool> conditionDelegate;
+                if (condition._conditionDelegateReference.TryGetTarget(out conditionDelegate))
+                {
+                    return conditionDelegate;
+                }
+                else
+                {
+                    return () => false;
+                }
+            }
+
+            public void Dispose()
+            {
+                _conditionDelegateReference = null;
+            }
+
         }
         // end Condition class ---------- ---------- ---------- 
-
-
+    }
 
 
 

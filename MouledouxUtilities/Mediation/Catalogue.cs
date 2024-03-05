@@ -16,7 +16,7 @@ namespace Mouledoux.Mediation
         /// <summary>
         /// Messages that had no subscriptions at broadcast, but were marked for hold
         /// </summary>
-        private static HashSet<TKey> m_staleMessages = new HashSet<TKey>();
+        private static Dictionary<TKey, TArg> m_staleMessages = new Dictionary<TKey, TArg>();
 
 
         public static Action<Subscription> OnSubAdded = default;
@@ -52,7 +52,20 @@ namespace Mouledoux.Mediation
 
             if (!messageBroadcasted && a_holdMessage)
             {
-                m_staleMessages.Add(a_subKey);
+                TryAddToStaleMessages(a_subKey, a_arg);
+            }
+        }
+
+
+        private static bool TryAddToStaleMessages(TKey a_subKey, TArg a_arg)
+        {
+            if(!m_staleMessages.ContainsKey(a_sub))
+            {
+                m_staleMessages.Add(a_subKey, a_arg);
+            }
+            else
+            {
+                m_staleMessages[a_subKey] = a_arg;
             }
         }
 
@@ -216,10 +229,11 @@ namespace Mouledoux.Mediation
                     _tSub = new List<Subscription>();
                     m_subscriptions.Add(_message, _tSub);
 
-                    if (a_acceptStaleMesages && m_staleMessages.Contains(_message))
+                    if (a_acceptStaleMesages && m_staleMessages.ContainsKey(_message))
                     {
+                        TArg staleArg = m_staleMessages[_message];
+                        a_sub.Callback?.Invoke(staleArg);
                         m_staleMessages.Remove(_message);
-                        a_sub.Callback?.Invoke(default);
                     }
                 }
 
@@ -323,16 +337,11 @@ namespace Mouledoux.Mediation
 
 
 
-            public Subscription(TKey a_subKey, Action<TArg> a_callback, int a_priority = 0, bool a_autoSub = false, bool a_acceptStaleMessages = false)
+            public Subscription(TKey a_subKey, Action<TArg> a_callback, int a_priority = 0)
             {
                 SubKey = a_subKey;
                 Priority = a_priority;
                 Callback = a_callback;
-
-                if(a_autoSub)
-                {
-                    Subscribe(a_acceptStaleMessages);
-                }
             }
 
 

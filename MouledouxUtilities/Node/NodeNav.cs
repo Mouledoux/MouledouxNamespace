@@ -27,9 +27,11 @@ namespace Mouledoux.Node
         // ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ---------- ----------
         public static Stack<NodeType> SoloStar(NodeType begNode, NodeType endNode, object chainLocker, bool canReturn = true, float hMod = 1f, float gMod = 1f)
         {
-            if(begNode.Equals(endNode) || begNode == null || endNode == null || !endNode.IsTraversable) return null;
-
-
+            if(begNode.Equals(endNode) || begNode == null || endNode == null || !endNode.IsTraversable)
+            {
+                return null;
+            }
+            
             List<NodeType> openList = new List<NodeType>();
             List<NodeType> closedList = new List<NodeType>();
 
